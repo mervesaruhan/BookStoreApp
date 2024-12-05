@@ -13,7 +13,14 @@ builder.Services.AddSwaggerGen();
 
 
 builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<IUserRepository, UserRepository>();
+builder.Services.AddSingleton<IBookRepository, BookRepository>();
+builder.Services.AddScoped<IBookService, BookService>();
+builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
+builder.Services.AddScoped<IOrderService, OrderService>();
+builder.Services.AddSingleton<ICategoryRepository, CategoryRepository>();
+
+
 builder.Services.AddAutoMapper(typeof(Program));
 
 

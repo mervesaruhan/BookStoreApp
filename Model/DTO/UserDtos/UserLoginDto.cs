@@ -1,12 +1,12 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace BookStoreApp.Model.DTO
+namespace BookStoreApp.Model.DTO.UserDtos
 {
     public class UserLoginDto
     {
-        [Required(ErrorMessage ="Giriş yapmak için mailinizi giriniz.")]
+        [Required(ErrorMessage = "Giriş yapmak için mailinizi giriniz.")]
         public string Email { get; set; } = null!;
-        [Required(ErrorMessage ="Şifre alanı boş bırakılamaz!")]
+        [Required(ErrorMessage = "Şifre alanı boş bırakılamaz!")]
         public string Password { get; set; } = null!;
     }
 }

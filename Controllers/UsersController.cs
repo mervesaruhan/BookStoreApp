@@ -1,4 +1,4 @@
-﻿using BookStoreApp.Model.DTO;
+﻿using BookStoreApp.Model.DTO.UserDtos;
 using BookStoreApp.Model.Entities;
 using BookStoreApp.Model.Interface;
 using Microsoft.AspNetCore.Http;
@@ -34,10 +34,14 @@ namespace BookStoreApp.Controllers
             //    Role = userDto.Role
             //}; 
             #endregion
-            var createdUser = _userService.RegisterUser(userDto);
+            var response = _userService.RegisterUser(userDto);
 
+            if (response.Data != null)
+            {
+                return CreatedAtAction(nameof(GetUserById), new { id = response.Data.Id }, response);
+            }
 
-            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
+            return BadRequest(response.Errors);
 
         }
 
@@ -48,20 +52,21 @@ namespace BookStoreApp.Controllers
         [HttpPost("login")]
         public IActionResult LoginUser(UserLoginDto userLoginDto)
         {
-            var (user, message) = _userService.AuthenticateUser(userLoginDto);
-            if (user == null)
+            var response = _userService.AuthenticateUser(userLoginDto);
+            if (response.Data == null)
             {
-                return Unauthorized("Kullanıcı adı veya şifre yanlış");
+                return Unauthorized(response);
             }
 
-            return Ok("Giriş başarılı!");
+            return Ok(response);
         }
 
 
         [HttpGet]
         public IActionResult GetAllUsers()
         {
-            var users = _userService.GetAllUsers();
+            var response = _userService.GetAllUsers();
+            if (response.Data != null || !response.Data.Any()) return NotFound(response);
 
             #region AlternativeWay
             //var userDtos = users.Select(user => new UserDto
@@ -88,7 +93,7 @@ namespace BookStoreApp.Controllers
             //} 
             #endregion
 
-            return Ok(users);
+            return Ok(response);
 
         }
 
@@ -100,9 +105,9 @@ namespace BookStoreApp.Controllers
         [HttpGet("{id}")]
         public IActionResult GetUserById(int id)
         {
-            var user = _userService.GetUserById(id);
-            if (user == null) return NotFound();
-            return Ok(user);
+            var response = _userService.GetUserById(id);
+            if (response.Data == null) return NotFound(response);
+            return Ok(response);
         }
 
 
@@ -111,10 +116,10 @@ namespace BookStoreApp.Controllers
         public IActionResult UpdateUser(int id, UserUpdateDto updatedUserDto)
         {
    
-            var result = _userService.UpdateUser(id,  updatedUserDto);
-            if (result == null) return NotFound("Kullanıcı bulunamadı.");
+            var response = _userService.UpdateUser(id,  updatedUserDto);
+            if (response.Data == null) return NotFound(response);
 
-            return Ok(result);
+            return Ok(response);
 
         }
 
@@ -124,8 +129,8 @@ namespace BookStoreApp.Controllers
         [HttpDelete ("{id}")]
         public IActionResult DeleteUser(int id)
         {
-            var result = _userService.DeleteUser(id);
-            if (!result) return NotFound("Kullanıcı bulunamadı.");
+            var response = _userService.DeleteUser(id);
+            if (!response.Data) return NotFound(response);
 
             return NoContent();
         }

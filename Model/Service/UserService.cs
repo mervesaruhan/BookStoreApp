@@ -1,5 +1,6 @@
 ﻿using AutoMapper;
 using BookStoreApp.Model.DTO;
+using BookStoreApp.Model.DTO.UserDtos;
 using BookStoreApp.Model.Entities;
 using BookStoreApp.Model.Interface;
 
@@ -18,7 +19,7 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public UserDto RegisterUser(UserRegisterDto userDto)
+        public ResponseDto<UserDto> RegisterUser(UserRegisterDto userDto)
         {
             #region Manuel Mapping
             //var user = new User
@@ -54,16 +55,19 @@ namespace BookStoreApp.Model.Service
 
             //kullanıcı kaydet ve user->userdto dönüşümü
             var createdUser = _userRepository.Add(user);
-            return _mapper.Map<UserDto>(createdUser);
+            var userDtoResult = _mapper.Map<UserDto>(createdUser);
+
+            return ResponseDto<UserDto>.Succes(userDtoResult);
+
         }
 
 
 
-        public (UserDto? loginDto, string Message) AuthenticateUser(UserLoginDto userLoginDto)
+        public ResponseDto<UserDto>  AuthenticateUser(UserLoginDto userLoginDto)
         {
             var user =_userRepository.GetByEmail(userLoginDto.Email);
             if (user == null || !VerifyPassword(userLoginDto.Password, user.PasswordHash, user.PasswordSalt)){
-                return (null, "Kullanıcı adı veya şifre yanlış!");
+                return ResponseDto<UserDto>.Fail("Kullanıcı adı veya şifre yanlış!");
             }
 
             #region Manuel mapping
@@ -77,17 +81,16 @@ namespace BookStoreApp.Model.Service
             #endregion
             var loginDto = _mapper.Map<UserDto?>(user);
 
-            return (loginDto, "Giriş Başarılı!");
+            return ResponseDto<UserDto>.Succes(loginDto!);
         }
 
 
-        public UserDto? GetUserById(int id)
+        public ResponseDto<UserDto>? GetUserById(int id)
         {
             var user =_userRepository.GetById(id);
             if (user == null)
             {
-                Console.WriteLine("Kullanıcı bulunamadı! ");
-                return null;
+                return ResponseDto<UserDto>.Fail("Kullanıcı bulunamadı! ");
             }
 
             #region Manuel mapping
@@ -99,15 +102,17 @@ namespace BookStoreApp.Model.Service
             //    Role = user.Role
             //}; 
             #endregion
-            return _mapper.Map<UserDto>(user);
+            var result = _mapper.Map<UserDto>(user);
+            return ResponseDto<UserDto>.Succes(result);
         }
 
 
 
-        public List<UserDto> GetAllUsers()
+        public ResponseDto<List<UserDto>> GetAllUsers()
         {
 
             var users = _userRepository.GetAll();
+            if (users == null) return ResponseDto<List<UserDto>>.Fail("Hiçbir kullanıcı bulunamadı.");
 
             #region manuel mapping
             //return users.Select(user => new UserDto
@@ -119,14 +124,16 @@ namespace BookStoreApp.Model.Service
 
             //}).ToList(); 
             #endregion
-            return _mapper.Map<List<UserDto>>(users);
+            var resultList = _mapper.Map<List<UserDto>>(users);
+
+            return ResponseDto<List<UserDto>>.Succes(resultList);  
         }
 
 
-        public UserDto UpdateUser(int id, UserUpdateDto updatedUserDto)
+        public ResponseDto<UserDto> UpdateUser(int id, UserUpdateDto updatedUserDto)
         {
             var user = _userRepository.GetById(id);
-            if (user == null)  return null; 
+            if (user == null)  return ResponseDto<UserDto>.Fail("Kullanıcı bulunamadı."); 
 
             user.Email = updatedUserDto.Email;
             user.FullName = updatedUserDto.FullName;
@@ -144,7 +151,9 @@ namespace BookStoreApp.Model.Service
 
             //}; 
             #endregion
-            return _mapper.Map<UserDto>(updatedUser);
+            var resultDto = _mapper.Map<UserDto>(updatedUser);
+
+            return ResponseDto<UserDto>.Succes(resultDto);
 
         }
 
@@ -152,10 +161,13 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public bool DeleteUser(int id)
+        public ResponseDto<bool> DeleteUser(int id)
         {
-            return  _userRepository.Delete(id);
+            var result =  _userRepository.Delete(id);
 
+            if (!result) return ResponseDto<bool>.Fail("Kullanıcı bulunamadı veya silinemedi");
+
+            return ResponseDto<bool>.Succes(true);
         }
 
 
