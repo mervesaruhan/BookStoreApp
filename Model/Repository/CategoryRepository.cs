@@ -34,9 +34,8 @@ namespace BookStoreApp.Model.Repository
 
         public Category GetCategoryByName(string name)
         {
-            var category = _categories.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            if (category == null) throw new ValidationException("Girilen isimde category yoktur");
-            return category;
+            return _categories.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+           
         }
 
 

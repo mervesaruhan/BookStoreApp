@@ -20,8 +20,8 @@ namespace BookStoreApp.Model.Service
         public ResponseDto<CategoryDto> AddCategory(CategoryCreateDto createDto)
         {
 
-            var existingCategort = _categoryRepository.GetCategoryByName(createDto.Name);
-            if (existingCategort != null) 
+            var existingCategory = _categoryRepository.GetCategoryByName(createDto.Name);
+            if (existingCategory != null) 
             { 
                 return ResponseDto<CategoryDto>.Fail("Girilen kategori zaten mevcut!"); 
             }
