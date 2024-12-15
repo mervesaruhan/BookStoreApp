@@ -9,6 +9,7 @@ namespace BookStoreApp.Model.Entities
         public int UserId { get; set; }
         public List<ShoppingCartItem> Items { get; set; } = new();
         public decimal TotalPrice => Items.Sum(item => item.TotalPrice);
+        public ShoppingCartStatus Status { get; set; } = ShoppingCartStatus.Pending;
     }
 
     public class ShoppingCartItem
@@ -19,5 +20,12 @@ namespace BookStoreApp.Model.Entities
         public int Quantity { get; set; }
         public decimal Price { get; set; }
         public decimal TotalPrice => Quantity * Price;
+    }
+
+    public enum ShoppingCartStatus
+    {
+        Pending,
+        Completed,
+        Failed
     }
 }

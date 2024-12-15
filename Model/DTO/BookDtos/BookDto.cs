@@ -10,5 +10,6 @@ namespace BookStoreApp.Model.DTO.BookDtos
         public decimal Price { get; set; }
         public string Genre { get; set; } = null!;
         public List<Category> Categories { get; set; } = new();
+        public int  Stock {  get; set; }
     }
 }

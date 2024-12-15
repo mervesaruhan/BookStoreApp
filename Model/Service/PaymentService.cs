@@ -9,22 +9,32 @@ namespace BookStoreApp.Model.Service
     public class PaymentService : IPaymentService
     {
         private readonly IPaymentRepository _paymentRepository;
+        private readonly IShoppingCartRepository _shoppingCartRepository;
+        private readonly IOrderRepository _orderRepository;
         private readonly IMapper _mapper;
 
-        public PaymentService (IPaymentRepository paymentRepository, IMapper mapper)
+        public PaymentService (IPaymentRepository paymentRepository, IMapper mapper, IShoppingCartRepository shoppingCartRepository,IOrderRepository orderRepository)
         {
             _paymentRepository=paymentRepository;
             _mapper=mapper;
+            _shoppingCartRepository=shoppingCartRepository;
+            _orderRepository=orderRepository;
         }
 
-        public ResponseDto<PaymentDto> AddPayment(PaymentCreateDto paymentCreateDto)
+        public ResponseDto<PaymentDto> AddPayment(int cartId, PaymentCreateDto paymentCreateDto)
         {
             try
             {
+                var cart = _shoppingCartRepository.GetCartById(cartId);
+                if (cart == null || cart.Items.Any()) return ResponseDto<PaymentDto>.Fail("Sepet bulunamadı");
+
                 var payment = _mapper.Map<Payment>(paymentCreateDto);
+                payment.Amount = cart.TotalPrice;
                 payment.PaymentStatus = PaymentStatus.Completed;
+                payment.PaymentDate = DateTime.UtcNow;
 
                 var createPayment = _paymentRepository.AddPayment(payment);
+
                 var result = _mapper.Map<PaymentDto>(createPayment);
                 return ResponseDto<PaymentDto>.Succes(result);
             }
@@ -64,5 +74,20 @@ namespace BookStoreApp.Model.Service
             var result = _mapper.Map<List<PaymentDto>>(payments);
             return ResponseDto<List<PaymentDto>>.Succes(result);
         }
+
+        public void UpdateOrderStatusBasedOnPayment(Order order, Payment payment)
+        {
+            if (payment.PaymentStatus == PaymentStatus.Completed)
+            {
+                order.Status = OrderStatus.Shipped;
+            }
+            else
+            {
+                order.Status = OrderStatus.Pending;
+            }
+            _orderRepository.UpdateOrder(order.Id,order);
+        }
+
+
     }
 }

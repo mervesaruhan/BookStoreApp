@@ -50,6 +50,17 @@ namespace BookStoreApp.Model.Repository
             return true;
         }
 
+        public Order UpdateOrder (Order order)
+        {
+            var existingOrder = GetOrderById(order.Id);
+            if (existingOrder == null)  throw new Exception($"{nameof(Order)} is not exists");
+
+            existingOrder.Status = order.Status;
+            existingOrder.TotalPrice = order.TotalPrice;
+
+            return existingOrder;
+        }
+
 
         public List<Order> GetOrdersByStatus(OrderStatus status)
         {

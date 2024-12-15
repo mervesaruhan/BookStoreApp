@@ -1,4 +1,5 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BookStoreApp.Model.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookStoreApp.Model.DTO.ShoppingCartDtos
 {
@@ -8,5 +9,6 @@ namespace BookStoreApp.Model.DTO.ShoppingCartDtos
         public int UserId { get; set; }
         public List<ShoppingCartItemsDto>? Items { get; set; } = new();
         public decimal TotalPrice { get; set; }
+        public ShoppingCartStatus Status { get; set; } = ShoppingCartStatus.Pending;
     }
 }

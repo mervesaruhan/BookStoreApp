@@ -40,7 +40,7 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet ("genre/{genre}")]
-        public IActionResult GetbooksByGenre(string genre)
+        public IActionResult GetBooksByGenre(string genre)
         {
             var response = _bookService.GetBooksByGenre(genre);
             if (response.Data == null || !response.Data.Any()) return NotFound(Response);
@@ -49,7 +49,7 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("search / {searchText}")]
-        public IActionResult searchBook(string text)
+        public IActionResult SearchBook(string text)
         {
             var response = _bookService.SearchBooks(text);
             if (response.Data == null || !response.Data.Any()) { return NotFound(Response); }

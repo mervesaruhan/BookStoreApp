@@ -23,7 +23,7 @@ namespace BookStoreApp.Model.Service
         public ResponseDto<ShoppingCartDto> AddShoppingCart(ShoppingCartCreateDto createCartDto)
         {
             var cart = _shoppingCartRepository.GetShoppingCartByUserId(createCartDto.UserId);//kullanıcı sepetini bulma
-            foreach (var itemDto in createCartDto.Items)//kullanıcının eklemek istedigi ürüner üzerinde döngü oluşturulur
+            foreach (var itemDto in createCartDto.Items)//kullanıcının eklemek istedigi ürünler üzerinde döngü oluşturulur
             {
                 var book = _bookRepository.GetBookById(itemDto.BookId);//book idye göre kitap bilgileri kontrol edilir
                 if (book == null)
@@ -67,6 +67,24 @@ namespace BookStoreApp.Model.Service
             var isDeleted = _shoppingCartRepository.ClearCart(userId);
             if (!isDeleted)  return ResponseDto<bool>.Fail("Sepet zaten boş");
             return  ResponseDto<bool>.Succes(true);
+        }
+
+        public ResponseDto<ShoppingCartDto> GetCartById(int id)
+        {
+            var cart = _shoppingCartRepository.GetCartById(id);
+            if (cart == null) return ResponseDto<ShoppingCartDto>.Fail("Sepet bulunamadı");
+
+            var result = _mapper.Map<ShoppingCartDto>(cart) ;
+            return ResponseDto<ShoppingCartDto>.Succes(result);
+        }
+
+        public ResponseDto<ShoppingCartDto> GetOrCreateCart(int userId)
+        {
+            var cart = _shoppingCartRepository.GetShoppingCartByUserId(userId)
+                       ?? _shoppingCartRepository.CreateCart(new ShoppingCart { UserId = userId });
+
+            var result = _mapper.Map<ShoppingCartDto>(cart);
+            return ResponseDto<ShoppingCartDto>.Succes(result);
         }
 
 

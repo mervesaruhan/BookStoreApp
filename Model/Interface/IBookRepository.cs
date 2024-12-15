@@ -7,7 +7,7 @@ namespace BookStoreApp.Model.Interface
         Book AddBook(Book book);
         Book UpdateBook(Book book);
         List<Book> GetAllBooks();
-        Book GetBookById(int id);
+        Book? GetBookById(int id);
         List<Book> GetBooksByGenre(string genre);
         List<Book> SearchBooks(string searchText);
         bool DeleteBook(int id);

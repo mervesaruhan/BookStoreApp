@@ -21,6 +21,12 @@ namespace BookStoreApp.Model.Service
 
         public ResponseDto<UserDto> RegisterUser(UserRegisterDto userDto)
         {
+            // Enum doğrulama: Role değeri geçerli mi?
+            if (!Enum.TryParse<UserRole>(userDto.Role.ToString(), out var parsedRole) || !Enum.IsDefined(typeof(UserRole), parsedRole))
+            {
+                return ResponseDto<UserDto>.Fail("Geçersiz kullanıcı rolü! Sadece Admin (0) veya Customer (1) değerlerini kabul eder.");
+            }
+
             #region Manuel Mapping
             //var user = new User
             //{
@@ -45,6 +51,7 @@ namespace BookStoreApp.Model.Service
             #endregion
             //UserRegisterDto -> user dönüşümü
             var user = _mapper.Map<User>(userDto);
+            user.Role = parsedRole; // Doğrulanmış enum değeri atanıyor
 
 
             //şifre hashleme
@@ -57,32 +64,26 @@ namespace BookStoreApp.Model.Service
             var createdUser = _userRepository.Add(user);
             var userDtoResult = _mapper.Map<UserDto>(createdUser);
 
+
             return ResponseDto<UserDto>.Succes(userDtoResult);
 
         }
 
 
 
-        public ResponseDto<UserDto>  AuthenticateUser(UserLoginDto userLoginDto)
+
+        public ResponseDto<UserDto> AuthenticateUser(UserLoginDto userLoginDto)
         {
-            var user =_userRepository.GetByEmail(userLoginDto.Email);
-            if (user == null || !VerifyPassword(userLoginDto.Password, user.PasswordHash, user.PasswordSalt)){
+            var user = _userRepository.GetByEmail(userLoginDto.Email);
+            if (user == null || !VerifyPassword(userLoginDto.Password, user.PasswordHash, user.PasswordSalt))
+            {
                 return ResponseDto<UserDto>.Fail("Kullanıcı adı veya şifre yanlış!");
             }
 
-            #region Manuel mapping
-            //var loginDto = new UserDto
-            //{
-            //    Id =user.Id,
-            //    FullName=user.FullName,
-            //    Email = user.Email,
-            //    Role = user.Role
-            //}; 
-            #endregion
-            var loginDto = _mapper.Map<UserDto?>(user);
-
-            return ResponseDto<UserDto>.Succes(loginDto!);
+            var loginDto = _mapper.Map<UserDto>(user);
+            return ResponseDto<UserDto>.Succes(loginDto);
         }
+
 
 
         public ResponseDto<UserDto>? GetUserById(int id)
@@ -102,6 +103,7 @@ namespace BookStoreApp.Model.Service
             //    Role = user.Role
             //}; 
             #endregion
+
             var result = _mapper.Map<UserDto>(user);
             return ResponseDto<UserDto>.Succes(result);
         }
@@ -112,7 +114,7 @@ namespace BookStoreApp.Model.Service
         {
 
             var users = _userRepository.GetAll();
-            if (users == null) return ResponseDto<List<UserDto>>.Fail("Hiçbir kullanıcı bulunamadı.");
+            if (users == null || !users.Any()) return ResponseDto<List<UserDto>>.Fail("Hiçbir kullanıcı bulunamadı.");
 
             #region manuel mapping
             //return users.Select(user => new UserDto
@@ -132,28 +134,26 @@ namespace BookStoreApp.Model.Service
 
         public ResponseDto<UserDto> UpdateUser(int id, UserUpdateDto updatedUserDto)
         {
-            var user = _userRepository.GetById(id);
-            if (user == null)  return ResponseDto<UserDto>.Fail("Kullanıcı bulunamadı."); 
+            try
+            {
+                var user = _userRepository.GetById(id);
+                if (user == null) return ResponseDto<UserDto>.Fail("Kullanıcı bulunamadı.");
 
-            user.Email = updatedUserDto.Email;
-            user.FullName = updatedUserDto.FullName;
+                user.Email = updatedUserDto.Email;
+                user.FullName = updatedUserDto.FullName;
 
 
-            var updatedUser = _userRepository.Update(user);
+                var updatedUser = _userRepository.Update(user);
 
-            #region manuel mapping
-            //return new UserDto
-            //{
-            //    Id = updatedUser.Id ,
-            //    FullName = updatedUser.FullName,
-            //    Email = updatedUser.Email,
-            //    Role = updatedUser.Role
+                var resultDto = _mapper.Map<UserDto>(updatedUser);
 
-            //}; 
-            #endregion
-            var resultDto = _mapper.Map<UserDto>(updatedUser);
+                return ResponseDto<UserDto>.Succes(resultDto);
+            }
 
-            return ResponseDto<UserDto>.Succes(resultDto);
+            catch (Exception ex)
+            {
+                return ResponseDto<UserDto>.Fail(ex.Message);
+            }
 
         }
 
@@ -171,17 +171,36 @@ namespace BookStoreApp.Model.Service
         }
 
 
+
+
+
         #region Hash
         private (byte[] Hash, byte[] Salt) CreatePasswordHash(string password)
         {
-            return (new byte[0], new byte[0]);
+            using (var hmac = new System.Security.Cryptography.HMACSHA512())
+            {
+                var passwordSalt = hmac.Key;
+                var passwordHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                return (passwordHash, passwordSalt);
+            }
         }
+
+
+
         private bool VerifyPassword(string password, byte[] storedHash, byte[] storedSalt)
         {
+            using (var hmac = new System.Security.Cryptography.HMACSHA512(storedSalt))
+            {
+                var computedHash = hmac.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+                for (int i = 0; i < computedHash.Length; i++)
+                {
+                    if (computedHash[i] != storedHash[i]) return false;
+                }
+            }
             return true;
         }
 
-     
+
         #endregion
 
 

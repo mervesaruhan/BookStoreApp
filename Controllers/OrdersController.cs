@@ -22,7 +22,7 @@ namespace BookStoreApp.Controllers
         {
             if (!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi.");
 
-            var response = _orderService.AddOrder(orderCreateDto);
+            var response = _orderService.AddOrder(orderCreateDto.UserId,orderCreateDto);
             if (response.Data == null) return BadRequest(response);
 
             return CreatedAtAction(nameof(GetOrderById), new { id = response.Data.Id }, response);
@@ -58,6 +58,20 @@ namespace BookStoreApp.Controllers
         {
             var response = _orderService.UpdateOrderStatus(id, status);
             if (!response.Data) return NotFound(response);
+            return Ok(response);
+        }
+
+        [HttpPut]
+        public IActionResult UpdateOrder([FromBody] OrderUpdateDto orderUpdateDto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest("Geçersiz veri gönderildi.");
+
+            var response = _orderService.UpdateOrder(orderUpdateDto);
+
+            if (response.Data == null)
+                return NotFound(response.Errors);
+
             return Ok(response);
         }
 

@@ -34,14 +34,15 @@ namespace BookStoreApp.Model.Repository
 
 
 
-        public User GetByEmail(string email)
+        public User? GetByEmail(string email)
         {
+
             return _users.FirstOrDefault(u => u.Email == email);
         }
 
 
 
-        public User GetById(int id)
+        public User? GetById(int id)
         {
            return _users.FirstOrDefault( u => u.Id == id);
         }
@@ -51,7 +52,7 @@ namespace BookStoreApp.Model.Repository
         public User Update(User user)
         {
             var existingUser = GetById(user.Id);
-            if (existingUser == null) Console.WriteLine("Kullanıcı bulunamadı! ");
+            if (existingUser == null) throw new Exception("Kullanıcı bulunamadı.");
 
             existingUser.FullName = user.FullName;
             existingUser.Email = user.Email;

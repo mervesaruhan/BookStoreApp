@@ -11,6 +11,7 @@ namespace BookStoreApp.Model.DTO.UserDtos
         [StringLength(10, MinimumLength = 4, ErrorMessage = "Şifre en az 4 en fazla 10 karakterden oluşturulmalıdır!")]
         public string Password { get; set; } = null!;
         public string Email { get; set; } = null!;
+        [RoleValidation]
         public UserRole Role { get; set; }
 
     }

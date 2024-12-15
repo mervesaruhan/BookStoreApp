@@ -51,7 +51,7 @@ namespace BookStoreApp.Model.Service
         public ResponseDto<bool> DeleteCategoryById(int id)
         {
             var isDeleted =_categoryRepository.DeleteCategory(id);
-            if (!isDeleted) return ResponseDto<bool>.Fail("kategori sbulunamadı");
+            if (!isDeleted) return ResponseDto<bool>.Fail("kategori bulunamadı");
             return ResponseDto<bool>.Succes(true);
 
         }

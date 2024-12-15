@@ -35,6 +35,19 @@ namespace BookStoreApp.Model.Repository
             _shoppingCarts.Remove(cart);
             return true;
         }
-            
+
+        public ShoppingCart? GetCartById(int id)
+        {
+            return _shoppingCarts.FirstOrDefault( c => c.Id == id);
+        }
+
+        public ShoppingCart CreateCart(ShoppingCart cart)
+        {
+            cart.Id = _shoppingCarts.Count + 1; // Yeni bir ID ataması
+            cart.Items = new List<ShoppingCartItem>(); // Varsayılan olarak boş bir sepet
+            _shoppingCarts.Add(cart);
+            return cart;
+        }
+
     }
 }

@@ -7,6 +7,8 @@ namespace BookStoreApp.Model.Interface
         ShoppingCart GetShoppingCartByUserId(int userId);
         ShoppingCart UpdateShoppingCart(ShoppingCart cart);
         bool ClearCart(int userId);
+        ShoppingCart? GetCartById(int id);
+        ShoppingCart CreateCart(ShoppingCart cart);
 
     }
 }

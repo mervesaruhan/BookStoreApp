@@ -25,27 +25,34 @@ namespace BookStoreApp.Model.Service
 
         public ResponseDto<BookDto> AddBook(BookCreateDto bookDto)
         {
-            //kategori validasyonu
-            var categories = bookDto.CategoryNames
-                .Select(name => _categoryRepository.GetCategoryByName(name))
-                .Where(c =>  c != null).ToList();
-
-            if (categories.Count != bookDto.CategoryNames.Count)
+            try
             {
-                return ResponseDto<BookDto>.Fail("Geçersiz kategori isimleri bulundu.");
+                //kategori validasyonu
+                var categories = bookDto.CategoryNames
+                    .Select(name => _categoryRepository.GetCategoryByName(name))
+                    .Where(c => c != null).ToList();
+
+                if (!categories.Any())
+                {
+                    return ResponseDto<BookDto>.Fail("Hiçbir kategori bulunamadı.");
+                }
+
+                // DTO'dan Entity'ye dönüşüm
+                var book = _mapper.Map<Book>(bookDto);
+                book.Categories = categories;
+
+                // Repository'de kitap ekleme
+                var createdBook = _bookRepository.AddBook(book);
+
+                // Entity'den DTO'ya dönüşüm
+                var result = _mapper.Map<BookDto>(createdBook);
+
+                return ResponseDto<BookDto>.Succes(result);
             }
-
-            // DTO'dan Entity'ye dönüşüm
-            var book = _mapper.Map<Book>(bookDto);
-            book.Categories = categories;
-
-            // Repository'de kitap ekleme
-            var createdBook = _bookRepository.AddBook(book);
-
-            // Entity'den DTO'ya dönüşüm
-            var result = _mapper.Map<BookDto>(createdBook);
-
-            return ResponseDto<BookDto>.Succes(result);
+            catch (Exception ex)
+            {
+                return ResponseDto<BookDto>.Fail(ex.Message);
+            }
         }
 
 
@@ -58,7 +65,7 @@ namespace BookStoreApp.Model.Service
                     .Select(name => _categoryRepository.GetCategoryByName(name))
                     .Where(c => c != null).ToList();
 
-                if (categories.Count() != updateBookDto.CategoryNames.Count)
+                if (!categories.Any())
                 {
                     return ResponseDto<BookDto>.Fail("Geçersiz kategori ismi girildi");
                 }

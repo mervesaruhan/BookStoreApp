@@ -26,14 +26,8 @@ namespace BookStoreApp.Controllers
         [HttpPost ("register")]
         public IActionResult RegisterUser(UserRegisterDto userDto)
         {
-            #region Comment
-            //var user = new User
-            //{
-            //    FullName = userDto.FullName,
-            //    Email = userDto.Email,
-            //    Role = userDto.Role
-            //}; 
-            #endregion
+            if (!ModelState.IsValid) { return BadRequest("Geçersiz veri gönderildi"); }
+
             var response = _userService.RegisterUser(userDto);
 
             if (response.Data != null)
@@ -52,6 +46,8 @@ namespace BookStoreApp.Controllers
         [HttpPost("login")]
         public IActionResult LoginUser(UserLoginDto userLoginDto)
         {
+            if (!ModelState.IsValid) return BadRequest("Kullanıcı adı veya şifre yanlış.");
+
             var response = _userService.AuthenticateUser(userLoginDto);
             if (response.Data == null)
             {
@@ -66,7 +62,7 @@ namespace BookStoreApp.Controllers
         public IActionResult GetAllUsers()
         {
             var response = _userService.GetAllUsers();
-            if (response.Data != null || !response.Data.Any()) return NotFound(response);
+            if (response.Data == null || !response.Data.Any()) return NotFound(response);
 
             #region AlternativeWay
             //var userDtos = users.Select(user => new UserDto
@@ -106,7 +102,7 @@ namespace BookStoreApp.Controllers
         public IActionResult GetUserById(int id)
         {
             var response = _userService.GetUserById(id);
-            if (response.Data == null) return NotFound(response);
+            if (response?.Data == null) return NotFound(response);
             return Ok(response);
         }
 
@@ -135,6 +131,16 @@ namespace BookStoreApp.Controllers
             return NoContent();
         }
 
+
+        [HttpGet("roles")]
+        public IActionResult GetUserRoles()
+        {
+            var roles = Enum.GetValues(typeof(UserRole))
+                            .Cast<UserRole>()
+                            .Select(r => new { Key = (int)r, Value = r.ToString() })
+                            .ToList();
+            return Ok(roles);
+        }
 
 
 

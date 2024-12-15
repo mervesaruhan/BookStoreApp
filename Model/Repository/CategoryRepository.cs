@@ -6,9 +6,23 @@ namespace BookStoreApp.Model.Repository
 {
     public class CategoryRepository : ICategoryRepository
     {
-        public CategoryRepository() { }
 
         private readonly List<Category> _categories = new();
+
+        public CategoryRepository()
+        {
+            // Hazır kategoriler ekleniyor
+            _categories.AddRange(new List<Category>
+        {
+            new Category { Id = 1, Name = "Roman" },
+            new Category { Id = 2, Name = "Bilim Kurgu" },
+            new Category { Id = 3, Name = "Tarih" },
+            new Category { Id = 4, Name = "Kişisel Gelişim" },
+            new Category { Id = 5, Name = "Çocuk" },
+            new Category { Id = 5, Name = "Aşk" }
+        });
+        }
+
 
         public Category AddCategory(Category category)
         {
@@ -32,7 +46,7 @@ namespace BookStoreApp.Model.Repository
         }
 
 
-        public Category GetCategoryByName(string name)
+        public Category? GetCategoryByName(string name)
         {
             return _categories.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
            

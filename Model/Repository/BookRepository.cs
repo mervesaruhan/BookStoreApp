@@ -48,6 +48,7 @@ namespace BookStoreApp.Model.Repository
             existingBook.Genre = book.Genre;
             existingBook.ISBN = book.ISBN;
             existingBook.Categories = book.Categories;
+            existingBook.Stock = book.Stock;
 
             return existingBook;
 
@@ -58,7 +59,7 @@ namespace BookStoreApp.Model.Repository
             return _books;
         }
 
-        public Book GetBookById(int id)
+        public Book? GetBookById(int id)
         {
             return _books.FirstOrDefault(x => x.Id == id);
             

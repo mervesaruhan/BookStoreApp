@@ -8,7 +8,7 @@ namespace BookStoreApp.Model.Interface
     {
         ResponseDto<UserDto> RegisterUser(UserRegisterDto userDto);
         ResponseDto<UserDto> AuthenticateUser(UserLoginDto userLoginDto);
-        ResponseDto<UserDto> GetUserById(int id);
+        ResponseDto<UserDto>? GetUserById(int id);
         ResponseDto<List<UserDto>> GetAllUsers();
         ResponseDto<UserDto> UpdateUser(int id, UserUpdateDto updatedUserDto);
         ResponseDto<bool> DeleteUser(int id);

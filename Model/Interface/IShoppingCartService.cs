@@ -8,5 +8,6 @@ namespace BookStoreApp.Model.Interface
         ResponseDto<ShoppingCartDto> AddShoppingCart(ShoppingCartCreateDto createCartDto);
         ResponseDto<ShoppingCartDto> GetCartByUserId(int userId);
         ResponseDto<bool> ClearCart(int userId);
+        ResponseDto<ShoppingCartDto> GetCartById(int id);
     }
 }
