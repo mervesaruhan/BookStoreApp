@@ -11,18 +11,21 @@ namespace BookStoreApp.Controllers
     {
         private readonly IPaymentService _paymentService;
 
-        public PaymentsController (IPaymentService paymentService)
+        public PaymentsController(IPaymentService paymentService)
         {
             _paymentService=paymentService;
         }
 
+
+
         [HttpPost]
-        public IActionResult AddPayment(PaymentCreateDto paymentCreateDto)
+        public IActionResult AddPayment(int orderId, PaymentCreateDto paymentCreateDto)
         {
             if (!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi");
 
-            var response = _paymentService.AddPayment(paymentCreateDto);
+            var response = _paymentService.AddPayment(orderId, paymentCreateDto);
             if (response.Data == null) return NotFound(response);
+
             return CreatedAtAction(nameof(GetPaymentById), new { id = response.Data.Id }, response);
 
         }
@@ -40,7 +43,7 @@ namespace BookStoreApp.Controllers
 
 
 
-        [HttpGet("user/{id}")]
+        [HttpGet("user/{userId}")]
         public IActionResult GetPaymentsByUserId(int userId)
         {
             var response = _paymentService.GetPaymentsByUserId(userId);
@@ -48,6 +51,17 @@ namespace BookStoreApp.Controllers
 
             return Ok(response);
         }
+
+
+
+        [HttpGet("order/{orderId}")]
+        public IActionResult GetPaymentByOrderId( int orderId)
+        {
+            var response = _paymentService.GetPaymentByOrderId((int)orderId);
+            if (response == null ) return NotFound(response);
+            return Ok(response);
+        }
+
 
 
         [HttpGet]

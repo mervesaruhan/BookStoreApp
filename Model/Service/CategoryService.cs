@@ -29,8 +29,11 @@ namespace BookStoreApp.Model.Service
             var category = _mapper.Map<Category>(createDto);
             var createdCategory =_categoryRepository.AddCategory(category);
             var result = _mapper.Map<CategoryDto>(createdCategory);
+
             return ResponseDto<CategoryDto>.Succes(result);
         }
+
+
 
         public ResponseDto<List<CategoryDto>> GetAllCategories()
         {
@@ -40,13 +43,24 @@ namespace BookStoreApp.Model.Service
         }
 
 
+
         public ResponseDto<CategoryDto> GetCategoryById(int id)
         {
-            var category = _categoryRepository.GetCategoryById(id);
-            if (category == null) return ResponseDto<CategoryDto>.Fail("Kategori bulunamadı");
-            var result = _mapper.Map<CategoryDto>(category);
-            return ResponseDto<CategoryDto>.Succes(result);
+            try
+            {
+                var category = _categoryRepository.GetCategoryById(id);
+                if (category == null) return ResponseDto<CategoryDto>.Fail("Kategori bulunamadı");
+                var result = _mapper.Map<CategoryDto>(category);
+                return ResponseDto<CategoryDto>.Succes(result);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<CategoryDto>.Fail(ex.Message);
+            }
+            
         }
+
+
 
         public ResponseDto<bool> DeleteCategoryById(int id)
         {
@@ -55,5 +69,16 @@ namespace BookStoreApp.Model.Service
             return ResponseDto<bool>.Succes(true);
 
         }
+
+
+        public ResponseDto<CategoryDto> GetCategoryByName(string name)
+        {
+            var category = _categoryRepository.GetCategoryByName(name);
+            if (category == null) return ResponseDto<CategoryDto>.Fail("Girilen isimde kategori bulunamamıştır.");
+
+            var result = _mapper.Map<CategoryDto>(category);
+            return ResponseDto<CategoryDto>.Succes(result);
+        }
+
     }
 }

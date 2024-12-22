@@ -6,7 +6,7 @@ namespace BookStoreApp.Model.Interface
     {
         Category AddCategory(Category category);
         Category GetCategoryById(int id);
-        Category GetCategoryByName(string name);
+        Category? GetCategoryByName(string name);
         List<Category> GetAllCategories();
         bool DeleteCategory(int id);
     }

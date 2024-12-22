@@ -8,7 +8,7 @@ namespace BookStoreApp.Model.Interface
         List<Order> GetAllOrders();
         Order? GetOrderById(int id);
         List<Order> GetOrdersByUserId(int userId);
-        bool UpdateOrderStatus(int orderId, OrderStatus status);
+        Order? UpdateOrderStatus(int orderId, OrderStatus status);
         List<Order> GetOrdersByStatus(OrderStatus status);
         Order UpdateOrder(Order order);
     }

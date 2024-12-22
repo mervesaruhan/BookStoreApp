@@ -5,7 +5,6 @@ using BookStoreApp.Model.DTO.BookDtos;
 using BookStoreApp.Model.DTO.OrderDtos;
 using BookStoreApp.Model.DTO.CategoryDtos;
 using BookStoreApp.Model.DTO.PaymentDtos;
-using BookStoreApp.Model.DTO.ShoppingCartDtos;
 
 
 namespace BookStoreApp.Model.Mapping
@@ -27,6 +26,7 @@ namespace BookStoreApp.Model.Mapping
             CreateMap<OrderCreateDto , OrderDto>().ReverseMap();
             CreateMap<Order,OrderDto>().ReverseMap();
             CreateMap<OrderCreateDto, Order>().ReverseMap();
+            CreateMap<OrderUpdateDto, Order>().ReverseMap();
 
             CreateMap<OrderItemCreateDto, OrderItem>();
             CreateMap<OrderItemDto, OrderItem>().ReverseMap();
@@ -38,12 +38,6 @@ namespace BookStoreApp.Model.Mapping
 
             CreateMap<PaymentCreateDto, Payment>().ReverseMap();
             CreateMap<Payment, PaymentDto>().ReverseMap();
-
-
-            CreateMap<ShoppingCart, ShoppingCartDto>().ReverseMap();
-            CreateMap<ShoppingCartItem, ShoppingCartItemsDto>().ReverseMap();
-            CreateMap<ShoppingCartCreateDto, ShoppingCart>();
-            CreateMap<ShoppingCartItemCreateDto, ShoppingCartItem>();
 
         }
 

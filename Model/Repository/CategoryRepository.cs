@@ -7,7 +7,7 @@ namespace BookStoreApp.Model.Repository
     public class CategoryRepository : ICategoryRepository
     {
 
-        private readonly List<Category> _categories = new();
+        private static readonly List<Category> _categories = new();
 
         public CategoryRepository()
         {

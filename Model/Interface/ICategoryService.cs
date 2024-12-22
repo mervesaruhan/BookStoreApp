@@ -9,5 +9,6 @@ namespace BookStoreApp.Model.Interface
         ResponseDto<List<CategoryDto>> GetAllCategories();
         ResponseDto<CategoryDto> GetCategoryById(int id);
         ResponseDto<bool> DeleteCategoryById(int id);
+        ResponseDto<CategoryDto> GetCategoryByName(string name);
     }
 }

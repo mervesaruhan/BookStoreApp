@@ -7,7 +7,7 @@ namespace BookStoreApp.Model.Interface
         Payment AddPayment(Payment payment);
         Payment? GetPaymentById(int id);
         List<Payment> GetPaymentsByUserId(int userId);
-        List<Payment> GetPaymentsByOrderId(int orderId);
+        Payment? GetPaymentByOrderId(int orderId);
         List<Payment> GetAllPayments();
     }
 }

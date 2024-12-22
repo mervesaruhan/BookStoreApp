@@ -17,16 +17,20 @@ namespace BookStoreApp.Controllers
             _orderService = orderService;
         }
 
+
+
         [HttpPost]
         public IActionResult AddOrder(OrderCreateDto orderCreateDto)
         {
-            if (!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi.");
+            if (!ModelState.IsValid) return BadRequest("Sipariş oluşturulurken geçersiz veri gönderildi.");
 
             var response = _orderService.AddOrder(orderCreateDto.UserId,orderCreateDto);
             if (response.Data == null) return BadRequest(response);
 
             return CreatedAtAction(nameof(GetOrderById), new { id = response.Data.Id }, response);
         }
+
+
 
         [HttpGet ("{id}")]
         public IActionResult GetOrderById(int id)
@@ -36,44 +40,77 @@ namespace BookStoreApp.Controllers
             return Ok(response);
         }
 
+
+
         [HttpGet("user/{userId}")]
         public IActionResult GetOrdersByUserId (int userId)
         {
             var response =_orderService.GetOrdersByUserId(userId);
-            if (response.Data == null || !response.Data.Any()) return NotFound(Response);
+            if (response.Data == null || !response.Data.Any()) return NotFound(response);
             return Ok(response);
 
         }
+
+
+
+        [HttpGet("status/{status}")]
+        public IActionResult GetOrdersByStatus(OrderStatus status)
+        {
+            if (!Enum.IsDefined(typeof(OrderStatus), status)) return BadRequest("Geçersiz sipariş durumu");
+            var response = _orderService.GetOrdersByStatus(status);
+            if (response.Data == null || !response.Data.Any()) return NotFound(response);
+            return Ok(response);
+
+        }
+
+
+
 
         [HttpGet]
         public IActionResult GetAllOrders()
         {
             var response = _orderService.GetAllOrders();
-            if (response == null || !response.Data.Any()) return NotFound(Response);
+            if (response == null || !response.Data.Any()) return NotFound(response);
             return Ok(response);
         }
+
+
 
         [HttpPut("{id}/status")]
         public IActionResult UpdateOrderStatus(int id, [FromBody]OrderStatus status)
         {
+            if (!Enum.IsDefined(typeof(OrderStatus), status)) return BadRequest("Geçersiz sipariş durumu");
+
             var response = _orderService.UpdateOrderStatus(id, status);
-            if (!response.Data) return NotFound(response);
+            if (response.Data== null) return NotFound(response);
             return Ok(response);
         }
+
+
 
         [HttpPut]
         public IActionResult UpdateOrder([FromBody] OrderUpdateDto orderUpdateDto)
         {
             if (!ModelState.IsValid)
-                return BadRequest("Geçersiz veri gönderildi.");
+                return BadRequest("Sipariş güncellenirken geçersiz veri gönderildi.");
 
             var response = _orderService.UpdateOrder(orderUpdateDto);
 
             if (response.Data == null)
                 return NotFound(response.Errors);
 
-            return Ok(response);
+            return Ok(response.Data);
         }
 
+
+        [HttpPut("{orderId}/payment-status")]
+        public IActionResult UpdateOrderStatusAfterPayment(int orderId, [FromBody] PaymentStatus paymentStatus)
+        {
+            if (!Enum.IsDefined(typeof(PaymentStatus), paymentStatus)) return BadRequest("Geçersiz sipariş durumu");
+
+            var response = _orderService.UpdateOrderStatusAfterPayment(orderId, paymentStatus);
+            if (response.Data == null) return NotFound(response);
+            return Ok(response);
+        }
     }
 }

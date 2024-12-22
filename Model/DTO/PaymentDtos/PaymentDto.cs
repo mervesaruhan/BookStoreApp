@@ -10,6 +10,6 @@ namespace BookStoreApp.Model.DTO.PaymentDtos
         public decimal Amount { get; set; }
         public PaymentMethod PaymentMethod { get; set; }
         public DateTime PaymentDate { get; set; }
-        public PaymentStatus Status { get; set; }
+        public PaymentStatus PaymentStatus { get; set; } = PaymentStatus.Pending;
     }
 }

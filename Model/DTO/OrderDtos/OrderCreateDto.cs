@@ -10,5 +10,6 @@ namespace BookStoreApp.Model.DTO.OrderDtos
         [Required(ErrorMessage = "Sipariş ürünleri boş olamaz.")]
         [MinLength(1, ErrorMessage = "En az bir ürün eklemelisiniz.")]
         public List<OrderItemCreateDto> Items { get; set; } = new();
+
     }
 }

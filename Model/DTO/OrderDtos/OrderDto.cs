@@ -1,4 +1,6 @@
-﻿namespace BookStoreApp.Model.DTO.OrderDtos
+﻿using BookStoreApp.Model.Entities;
+
+namespace BookStoreApp.Model.DTO.OrderDtos
 {
     public class OrderDto
     {
@@ -7,6 +9,8 @@
         public List<OrderItemDto> Items { get; set; } = new();
         public decimal TotalPrice { get; set; }
         public DateTime OrderDate { get; set; }
-        public string Status { get; set; }
+        public OrderStatus Status { get; set; } = OrderStatus.Pending;
     }
+
+ 
 }

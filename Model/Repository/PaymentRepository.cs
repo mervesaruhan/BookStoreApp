@@ -8,7 +8,7 @@ namespace BookStoreApp.Model.Repository
     {
         public PaymentRepository() { }
 
-        private readonly List<Payment> _payments = new();
+        private static readonly List<Payment> _payments = new();
 
         public Payment AddPayment(Payment payment)
         {
@@ -24,14 +24,18 @@ namespace BookStoreApp.Model.Repository
             return _payments.FirstOrDefault(p => p.Id == id);
         }
 
+
+
         public List<Payment> GetPaymentsByUserId(int userId)
         {
             return _payments.Where(p =>p.UserId == userId).ToList();
         }
 
-        public List<Payment> GetPaymentsByOrderId(int orderId)
+
+
+        public Payment? GetPaymentByOrderId(int orderId)
         {
-            return _payments.Where(p => p.OrderId == orderId).ToList();
+            return _payments.SingleOrDefault(p => p.OrderId == orderId);
         }
 
         public List<Payment> GetAllPayments()

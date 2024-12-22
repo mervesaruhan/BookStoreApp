@@ -49,6 +49,22 @@ namespace BookStoreApp.Controllers
 
         }
 
+
+
+
+        [HttpGet("name/{name}")]
+        public IActionResult GetCategoryByNamed(string name)
+        {
+            var response = _categoryService.GetCategoryByName(name);
+            if (response.Data == null) return NotFound(response);
+
+            return Ok(response);
+
+        }
+
+
+
+
         [HttpDelete("{id}")]
         public IActionResult DeleteCategoryById(int id)
         {

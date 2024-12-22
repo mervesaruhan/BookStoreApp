@@ -24,6 +24,7 @@ namespace BookStoreApp.Model.Service
             // Enum doğrulama: Role değeri geçerli mi?
             if (!Enum.TryParse<UserRole>(userDto.Role.ToString(), out var parsedRole) || !Enum.IsDefined(typeof(UserRole), parsedRole))
             {
+                
                 return ResponseDto<UserDto>.Fail("Geçersiz kullanıcı rolü! Sadece Admin (0) veya Customer (1) değerlerini kabul eder.");
             }
 

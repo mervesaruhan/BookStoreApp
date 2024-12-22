@@ -24,12 +24,15 @@ namespace BookStoreApp.Model.Repository
         }
 
 
+
         public Order? GetOrderById(int id)
         {
             var orders = _orders.FirstOrDefault(o => o.Id == id);
             if (orders == null) throw new Exception("Girilen id'de sipariş bulunmamaktadır");
             return orders;
         }
+
+
 
         public List<Order> GetOrdersByUserId(int userId)
         {
@@ -40,26 +43,31 @@ namespace BookStoreApp.Model.Repository
         }
 
 
-        public bool UpdateOrderStatus(int orderId, OrderStatus status)
+
+        public Order? UpdateOrderStatus(int orderId, OrderStatus status)
         {
             var order = GetOrderById(orderId);
-            if (order == null) return false;
+            if (order == null) return null;
 
             order.Status = status;
 
-            return true;
+            return order;
         }
+
+
 
         public Order UpdateOrder (Order order)
         {
             var existingOrder = GetOrderById(order.Id);
-            if (existingOrder == null)  throw new Exception($"{nameof(Order)} is not exists");
+            if (existingOrder == null)  throw new Exception($"{nameof(Order)} : siparişi yoktur");
 
             existingOrder.Status = order.Status;
             existingOrder.TotalPrice = order.TotalPrice;
 
             return existingOrder;
         }
+
+
 
 
         public List<Order> GetOrdersByStatus(OrderStatus status)

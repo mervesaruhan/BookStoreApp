@@ -59,10 +59,11 @@ namespace BookStoreApp.Model.Repository
             return _books;
         }
 
+
+
         public Book? GetBookById(int id)
         {
             return _books.FirstOrDefault(x => x.Id == id);
-            
         }
 
         public List<Book> GetBooksByGenre(string genre)
