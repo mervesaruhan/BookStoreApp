@@ -88,20 +88,6 @@ namespace BookStoreApp.Controllers
 
 
 
-        [HttpPut]
-        public IActionResult UpdateOrder([FromBody] OrderUpdateDto orderUpdateDto)
-        {
-            if (!ModelState.IsValid)
-                return BadRequest("Sipariş güncellenirken geçersiz veri gönderildi.");
-
-            var response = _orderService.UpdateOrder(orderUpdateDto);
-
-            if (response.Data == null)
-                return NotFound(response.Errors);
-
-            return Ok(response.Data);
-        }
-
 
         [HttpPut("{orderId}/payment-status")]
         public IActionResult UpdateOrderStatusAfterPayment(int orderId, [FromBody] PaymentStatus paymentStatus)
@@ -112,5 +98,37 @@ namespace BookStoreApp.Controllers
             if (response.Data == null) return NotFound(response);
             return Ok(response);
         }
+
+
+
+        [HttpPost("{orderId}/items")]
+        public IActionResult AddItemToOrder(int orderId, [FromBody] AddItemToOrderDto dto)
+        {
+            dto.OrderId = orderId;
+            var response = _orderService.AddItemToOrder(dto);
+            if (response.Data == null)
+                return BadRequest(response.Errors);
+            return Ok(response);
+        }
+
+
+
+
+        [HttpDelete("{orderId}/items/{bookId}")]
+        public IActionResult RemoveItemFromOrder(int orderId, int bookId)
+        {
+            var response = _orderService.RemoveItemFromOrder(new RemoveItemFromOrderDto
+            {
+                OrderId = orderId,
+                BookId = bookId
+            });
+            if (response.Data == null)
+                return BadRequest(response.Errors);
+            return Ok(response);
+        }
+
+
     }
+
+
 }

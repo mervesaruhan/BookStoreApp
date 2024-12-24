@@ -40,7 +40,10 @@ namespace BookStoreApp.Model.Repository
         public Book UpdateBook(Book book)
         {
             var existingBook = GetBookById(book.Id);
-            if (existingBook == null) throw new Exception("Kitap bulunamadı");
+            if (existingBook == null)
+            {
+                throw new Exception($"Kitap bulunamadı: ID {book.Id}");
+            }
 
             existingBook.Author = book.Author;
             existingBook.Title = book.Title;

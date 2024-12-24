@@ -26,7 +26,8 @@ namespace BookStoreApp.Model.Mapping
             CreateMap<OrderCreateDto , OrderDto>().ReverseMap();
             CreateMap<Order,OrderDto>().ReverseMap();
             CreateMap<OrderCreateDto, Order>().ReverseMap();
-            CreateMap<OrderUpdateDto, Order>().ReverseMap();
+
+
 
             CreateMap<OrderItemCreateDto, OrderItem>();
             CreateMap<OrderItemDto, OrderItem>().ReverseMap();

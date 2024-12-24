@@ -25,6 +25,26 @@ namespace BookStoreApp.Model.Repository
 
 
 
+        public Order UpdateOrder(Order updatedOrder)
+        {
+            var existingOrder = _orders.FirstOrDefault(o => o.Id == updatedOrder.Id);
+            if (existingOrder == null)
+            {
+                throw new Exception("Girilen ID'de sipariş bulunamadı.");
+            }
+
+            // Güncellemeler
+            existingOrder.Status = updatedOrder.Status;
+            existingOrder.TotalPrice = updatedOrder.TotalPrice;
+            existingOrder.Items = updatedOrder.Items;
+            existingOrder.OrderDate = updatedOrder.OrderDate;
+
+            return existingOrder;
+        }
+
+
+
+
         public Order? GetOrderById(int id)
         {
             var orders = _orders.FirstOrDefault(o => o.Id == id);
@@ -54,18 +74,6 @@ namespace BookStoreApp.Model.Repository
             return order;
         }
 
-
-
-        public Order UpdateOrder (Order order)
-        {
-            var existingOrder = GetOrderById(order.Id);
-            if (existingOrder == null)  throw new Exception($"{nameof(Order)} : siparişi yoktur");
-
-            existingOrder.Status = order.Status;
-            existingOrder.TotalPrice = order.TotalPrice;
-
-            return existingOrder;
-        }
 
 
 

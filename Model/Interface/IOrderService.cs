@@ -10,10 +10,11 @@ namespace BookStoreApp.Model.Interface
         ResponseDto<OrderDto> GetOrderById(int id);
         ResponseDto<List<OrderDto>> GetOrdersByUserId(int userId);
         ResponseDto<List<OrderDto>> GetOrdersByStatus(OrderStatus status);
-        ResponseDto<OrderDto> UpdateOrderStatus(int id, OrderStatus status);
+        ResponseDto<OrderDto> UpdateOrderStatus(int id, OrderStatus newStatus);
         ResponseDto<List<OrderDto>> GetAllOrders();
         ResponseDto<OrderDto> UpdateOrderStatusAfterPayment(int orderId, PaymentStatus paymentStatus);
-        ResponseDto<OrderDto> UpdateOrder(OrderUpdateDto updateDto);
+        ResponseDto<OrderDto> AddItemToOrder(AddItemToOrderDto dto);
+        ResponseDto<OrderDto> RemoveItemFromOrder(RemoveItemFromOrderDto dto);
 
     }
 }

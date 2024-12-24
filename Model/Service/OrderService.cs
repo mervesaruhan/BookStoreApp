@@ -43,7 +43,7 @@ namespace BookStoreApp.Model.Service
                 foreach (var item in orderCreateDto.Items)
                 {
                     var book = _bookRepository.GetBookById(item.BookId);
-                    book.Stock -= item.Quantity;
+                    book!.Stock -= item.Quantity;
                     _bookRepository.UpdateBook(book);
 
                     var orderItem = new OrderItem
@@ -130,23 +130,61 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<OrderDto> UpdateOrderStatus(int id, OrderStatus status)
+        public ResponseDto<OrderDto> UpdateOrderStatus(int id, OrderStatus newStatus)
         {
             try
             {
-                var update = _orderRepository.UpdateOrderStatus(id, status);
-                if (update == null) return ResponseDto<OrderDto>.Fail("Girilen Id'de sipariş bulunmamaktadır.Durum güncellenmedi.");
+                var order = _orderRepository.GetOrderById(id);
+                if (order == null) return ResponseDto<OrderDto>.Fail("Girilen ID'de sipariş bulunamadı");
 
-                var result = _mapper.Map<OrderDto>(update);
+                if (newStatus == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled)
+                {
+                    foreach (var item in order.Items)
+                    {
+                        var book = _bookRepository.GetBookById(item.Id);
+                        if (book != null)
+                        {
+                            book.Stock += item.Quantity;
+                            _bookRepository.UpdateBook(book);
+                        }
+                        else
+                        {
+                            return ResponseDto<OrderDto>.Fail("Girilen ID'de kitap bulunamadı, stok işlemleri başarısız!");
+                        }
+                    }
+                }
+                else if (newStatus != OrderStatus.Cancelled && order.Status == OrderStatus.Cancelled)
+                {
+                    foreach (var item in order.Items)
+                    {
+                        var book = _bookRepository.GetBookById(id);
+                        if (book != null && book.Stock >= item.Quantity)
+                        {
+                            book.Stock -= item.Quantity;
+                            _bookRepository.UpdateBook(book);
+                        }
+                        else
+                        {
+                            return ResponseDto<OrderDto>.Fail("Girilen ID'de kitap bulunamadı veya " + $"Stok yetersiz: {item.BookId}" + " stok işlemleri başarısız!");
 
+                        }
+                    }
+                }
+                order.Status = newStatus;
+                _orderRepository.UpdateOrder(order);
+
+                var result = _mapper.Map<OrderDto>(order);
                 return ResponseDto<OrderDto>.Succes(result);
             }
-            catch (Exception ex)
+            catch (Exception ex) 
             {
-                return ResponseDto<OrderDto>.Fail(ex.Message);
+                return  ResponseDto<OrderDto>.Fail(ex.Message); 
             }
 
         }
+
+
+
 
         public ResponseDto<List<OrderDto>> GetAllOrders()
         {
@@ -166,106 +204,112 @@ namespace BookStoreApp.Model.Service
 
 
 
-        //public ResponseDto<OrderDto> UpdateOrder(OrderUpdateDto orderUpdateDto)
-        //{
-        //    try
-        //    {
-        //        var order = _mapper.Map<Order>(orderUpdateDto);
-
-        //        var updatedOrder = _orderRepository.UpdateOrder(order);
-
-        //        var result = _mapper.Map<OrderDto>(updatedOrder);
-        //        return ResponseDto<OrderDto>.Succes(result);
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return ResponseDto<OrderDto>.Fail(ex.Message);
-        //    }
-        //}
-
-
-        public ResponseDto<OrderDto> UpdateOrder(OrderUpdateDto orderUpdateDto)
-        {
-            var order = _orderRepository.GetOrderById(orderUpdateDto.Id);
-            if (order == null)
-            {
-                return new ResponseDto<OrderDto> { Data = null, Errors = new List<string> { "Sipariş bulunamadı." } };
-            }
-
-            // Status değişikliğini kontrol et
-            if (order.Status != orderUpdateDto.Status)
-            {
-                if (orderUpdateDto.Status == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled)
-                {
-                    // Sipariş iptali: Stok iadesi yapılır
-                    foreach (var item in order.Items)
-                    {
-                        var book = _bookRepository.GetBookById(item.BookId);
-                        if (book != null)
-                        {
-                            book.Stock += item.Quantity; // Stok iadesi
-                            _bookRepository.UpdateBook(book);
-                        }
-                    }
-                }
-                else if (order.Status == OrderStatus.Cancelled && orderUpdateDto.Status != OrderStatus.Cancelled)
-                {
-                    // Sipariş daha önce iptal edilmişse ve geri aktif duruma geçerse stok yeniden düşülür
-                    foreach (var item in order.Items)
-                    {
-                        var book = _bookRepository.GetBookById(item.BookId);
-                        if (book != null && book.Stock >= item.Quantity)
-                        {
-                            book.Stock -= item.Quantity; // Stoktan düşme
-                            _bookRepository.UpdateBook(book);
-                        }
-                        else
-                        {
-                            return ResponseDto<OrderDto>.Fail($"Stok yetersiz: {item.BookId}");
-
-                        }
-                    }
-                }
-            }
-
-            order.Status = orderUpdateDto.Status; // Sipariş durumu güncelle
-            _orderRepository.UpdateOrder(order);
-
-            var result = _mapper.Map<OrderDto>(order);
-
-            return  ResponseDto<OrderDto>.Succes(result);
-        }
-
 
 
 
         public ResponseDto<OrderDto> UpdateOrderStatusAfterPayment(int orderId, PaymentStatus paymentStatus)
         {
-            var order = _orderRepository.GetOrderById(orderId);
-            if (order == null)
+            try
             {
-                return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
-            }
+                var order = _orderRepository.GetOrderById(orderId);
+                if (order == null)
+                {
+                    return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
+                }
 
-            if (paymentStatus == PaymentStatus.Completed)
+                if (paymentStatus == PaymentStatus.Completed)
+                {
+                    order.Status = OrderStatus.Shipped;
+
+                }
+                else
+                {
+                    order.Status = OrderStatus.Pending;
+                    return ResponseDto<OrderDto>.Fail("Sipariş durumu ödeme tamamlanmadıgı için güncellenemedi.");
+                }
+
+                var updateOrder = _orderRepository.UpdateOrder(order);
+                var result = _mapper.Map<OrderDto>(updateOrder);
+
+                return ResponseDto<OrderDto>.Succes(result);
+            }
+            catch(Exception ex)
             {
-                order.Status = OrderStatus.Shipped;
-                
+                return ResponseDto<OrderDto>.Fail(ex.Message);
             }
-            else
-            {
-                order.Status = OrderStatus.Pending;
-                return ResponseDto<OrderDto>.Fail("Sipariş durumu ödeme tamamlanmadıgı için güncellenemedi.");
-            }
-
-            var updateOrder = _orderRepository.UpdateOrder(order);
-            var result = _mapper.Map<OrderDto>(updateOrder);
-
-            return ResponseDto<OrderDto>.Succes(result);
 
         }
 
 
+        //##############################################################
+
+        public ResponseDto<OrderDto> AddItemToOrder(AddItemToOrderDto dto)
+        {
+            try
+            {
+                var order = _orderRepository.GetOrderById(dto.OrderId);
+                if (order == null)
+                    return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
+
+                var book = _bookRepository.GetBookById(dto.BookId);
+                if (book == null || book.Stock < dto.Quantity)
+                    return ResponseDto<OrderDto>.Fail("Stok yetersiz veya kitap bulunamadı.");
+
+                book.Stock -= dto.Quantity;
+                _bookRepository.UpdateBook(book);
+
+                order.AddItem(new OrderItem
+                {
+                    BookId = dto.BookId,
+                    Quantity = dto.Quantity,
+                    UnitPrice = book.Price
+                });
+
+                _orderRepository.UpdateOrder(order);
+
+                var result = _mapper.Map<OrderDto>(order);
+                return ResponseDto<OrderDto>.Succes(result);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<OrderDto>.Fail(ex.Message);
+            }
+        }
+
+
+
+
+        public ResponseDto<OrderDto> RemoveItemFromOrder(RemoveItemFromOrderDto dto)
+        {
+            try
+            {
+                var order = _orderRepository.GetOrderById(dto.OrderId);
+                if (order == null)
+                    return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
+
+                var item = order.Items.FirstOrDefault(i => i.BookId == dto.BookId);
+                if (item == null)
+                    return ResponseDto<OrderDto>.Fail("Siparişte bu ürün bulunamadı.");
+
+                var book = _bookRepository.GetBookById(dto.BookId);
+                if (book != null)
+                {
+                    book.Stock += item.Quantity; // Stok iadesi
+                    _bookRepository.UpdateBook(book);
+                }
+
+                order.RemoveItem(dto.BookId);
+                _orderRepository.UpdateOrder(order);
+
+                var result = _mapper.Map<OrderDto>(order);
+                return ResponseDto<OrderDto>.Succes(result);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<OrderDto>.Fail(ex.Message);
+            }
+
+        }
 
 
 

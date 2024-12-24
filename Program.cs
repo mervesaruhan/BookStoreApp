@@ -37,7 +37,6 @@ builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
 builder.Services.AddScoped<IOrderService, OrderService>();
 
 builder.Services.AddSingleton<ICategoryRepository, CategoryRepository>();
-//builder.Services.AddScoped<ICategoryRepository, CategoryRepository>();
 builder.Services.AddScoped<ICategoryService, CategoryService>();
 
 builder.Services.AddSingleton<IPaymentRepository, PaymentRepository>();

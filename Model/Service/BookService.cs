@@ -73,7 +73,7 @@ namespace BookStoreApp.Model.Service
 
                 var book = _mapper.Map<Book>(updateBookDto);
                 book.Id = id;
-                book.Categories = categories;
+                book.Categories = categories!;
 
                 var updatedBook = _bookRepository.UpdateBook(book);
                 var result = _mapper.Map<BookDto>(updatedBook);
