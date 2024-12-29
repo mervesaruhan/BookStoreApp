@@ -14,7 +14,7 @@ namespace BookStoreApp.Model.Interface
         ResponseDto<List<OrderDto>> GetAllOrders();
         ResponseDto<OrderDto> UpdateOrderStatusAfterPayment(int orderId, PaymentStatus paymentStatus);
         ResponseDto<OrderDto> AddItemToOrder(AddItemToOrderDto dto);
-        ResponseDto<OrderDto> RemoveItemFromOrder(RemoveItemFromOrderDto dto);
+        ResponseDto<bool> UpdateOrderItem(int orderId, int bookId, int quantity);
 
     }
 }

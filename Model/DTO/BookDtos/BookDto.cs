@@ -1,4 +1,5 @@
-﻿using BookStoreApp.Model.Entities;
+﻿using BookStoreApp.Model.DTO.CategoryDtos;
+using BookStoreApp.Model.Entities;
 
 namespace BookStoreApp.Model.DTO.BookDtos
 {
@@ -9,7 +10,7 @@ namespace BookStoreApp.Model.DTO.BookDtos
         public string Author { get; set; } = null!;
         public decimal Price { get; set; }
         public string Genre { get; set; } = null!;
-        public List<Category> Categories { get; set; } = new();
+        public List<CategoryListDto> CategoryNames { get; set; } = new();
         public int  Stock {  get; set; }
     }
 }

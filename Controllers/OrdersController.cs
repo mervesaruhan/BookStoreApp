@@ -114,17 +114,29 @@ namespace BookStoreApp.Controllers
 
 
 
-        [HttpDelete("{orderId}/items/{bookId}")]
-        public IActionResult RemoveItemFromOrder(int orderId, int bookId)
+        [HttpPut("{orderId}/items/{bookId}")]
+        public IActionResult UpdateOrderItem(int orderId, int bookId, [FromBody] int quantity)
         {
-            var response = _orderService.RemoveItemFromOrder(new RemoveItemFromOrderDto
+            if (quantity < 0)
             {
-                OrderId = orderId,
-                BookId = bookId
-            });
-            if (response.Data == null)
+                return BadRequest("Quantity must be zero or a positive integer.");
+            }
+
+            // Servisi çağır
+            var response = _orderService.UpdateOrderItem(orderId, bookId, quantity);
+
+            // Hataları kontrol et
+            if (response.Errors != null && response.Errors.Any())
+            {
                 return BadRequest(response.Errors);
-            return Ok(response);
+            }
+
+            // Başarılı yanıt
+            return Ok(new
+            {
+                Message = "Order item updated successfully.",
+                Success = response.Data
+            });
         }
 
 

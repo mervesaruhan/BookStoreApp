@@ -12,7 +12,7 @@
         public int Stock { get; set; }
         public string Genre { get; set; } = null!;
      
-        public List<Category> Categories { get; set; } = new();
+        public List<Category> CategoryNames { get; set; } = new();
         
 
     }

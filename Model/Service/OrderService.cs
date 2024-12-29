@@ -44,7 +44,7 @@ namespace BookStoreApp.Model.Service
                 {
                     var book = _bookRepository.GetBookById(item.BookId);
                     book!.Stock -= item.Quantity;
-                    _bookRepository.UpdateBook(book);
+                    _bookRepository.UpdateBook(book.Id,book);
 
                     var orderItem = new OrderItem
                     {
@@ -145,7 +145,7 @@ namespace BookStoreApp.Model.Service
                         if (book != null)
                         {
                             book.Stock += item.Quantity;
-                            _bookRepository.UpdateBook(book);
+                            _bookRepository.UpdateBook(book.Id,book);
                         }
                         else
                         {
@@ -161,7 +161,7 @@ namespace BookStoreApp.Model.Service
                         if (book != null && book.Stock >= item.Quantity)
                         {
                             book.Stock -= item.Quantity;
-                            _bookRepository.UpdateBook(book);
+                            _bookRepository.UpdateBook(book.Id,book);
                         }
                         else
                         {
@@ -256,7 +256,7 @@ namespace BookStoreApp.Model.Service
                     return ResponseDto<OrderDto>.Fail("Stok yetersiz veya kitap bulunamadı.");
 
                 book.Stock -= dto.Quantity;
-                _bookRepository.UpdateBook(book);
+                _bookRepository.UpdateBook(book.Id,book);
 
                 order.AddItem(new OrderItem
                 {
@@ -279,36 +279,51 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<OrderDto> RemoveItemFromOrder(RemoveItemFromOrderDto dto)
+        public ResponseDto<bool> UpdateOrderItem(int orderId, int bookId, int quantity)
         {
             try
             {
-                var order = _orderRepository.GetOrderById(dto.OrderId);
+                var order = _orderRepository.GetOrderById(orderId);
+
                 if (order == null)
-                    return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
+                    return  ResponseDto<bool>.Fail("Sipari bulunamadı");
 
-                var item = order.Items.FirstOrDefault(i => i.BookId == dto.BookId);
-                if (item == null)
-                    return ResponseDto<OrderDto>.Fail("Siparişte bu ürün bulunamadı.");
+                if (order.Status != OrderStatus.Pending)
+                    return ResponseDto<bool>.Fail("SYalnızca Pending aşamasındak siparişler güncelleme yapabilir");
 
-                var book = _bookRepository.GetBookById(dto.BookId);
-                if (book != null)
+                var orderItem = order.Items.FirstOrDefault(item => item.BookId == bookId);
+                if (orderItem == null)
+                    return ResponseDto<bool>.Fail("OrderItem bulunamadı");
+
+                if (quantity == 0)
                 {
-                    book.Stock += item.Quantity; // Stok iadesi
-                    _bookRepository.UpdateBook(book);
+                    // Remove the item
+                    order.Items.Remove(orderItem);
+
+                    // Update book stock
+                    var book = _bookRepository.GetBookById(bookId);
+                    if (book != null)
+                        book.Stock += orderItem.Quantity;
+                }
+                else
+                {
+                    // Update quantity
+                    var difference = orderItem.Quantity - quantity;
+                    orderItem.Quantity = quantity;
+
+                    // Update book stock
+                    var book = _bookRepository.GetBookById(bookId);
+                    if (book != null)
+                        book.Stock += difference;
                 }
 
-                order.RemoveItem(dto.BookId);
                 _orderRepository.UpdateOrder(order);
-
-                var result = _mapper.Map<OrderDto>(order);
-                return ResponseDto<OrderDto>.Succes(result);
+                return  ResponseDto<bool>.Succes(true);
             }
             catch (Exception ex)
             {
-                return ResponseDto<OrderDto>.Fail(ex.Message);
+                return  ResponseDto<bool>.Fail(ex.Message);
             }
-
         }
 
 

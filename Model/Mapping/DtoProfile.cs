@@ -35,6 +35,7 @@ namespace BookStoreApp.Model.Mapping
             CreateMap<CategoryDto, Category>().ReverseMap();
             CreateMap<CategoryCreateDto , Category>().ReverseMap();
             CreateMap<CategoryUpdateDto, Category>().ReverseMap();
+            CreateMap<CategoryListDto, Category>().ReverseMap();
 
 
             CreateMap<PaymentCreateDto, Payment>().ReverseMap();

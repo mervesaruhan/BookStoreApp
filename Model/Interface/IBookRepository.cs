@@ -5,7 +5,7 @@ namespace BookStoreApp.Model.Interface
     public interface IBookRepository
     {
         Book AddBook(Book book);
-        Book UpdateBook(Book book);
+        Book UpdateBook(int id,Book book);
         List<Book> GetAllBooks();
         Book? GetBookById(int id);
         List<Book> GetBooksByGenre(string genre);

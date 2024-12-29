@@ -1,4 +1,6 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using BookStoreApp.Model.DTO.CategoryDtos;
+using BookStoreApp.Model.Entities;
+using System.ComponentModel.DataAnnotations;
 
 namespace BookStoreApp.Model.DTO.BookDtos
 {
@@ -14,7 +16,7 @@ namespace BookStoreApp.Model.DTO.BookDtos
         [Range(0.01,double.MaxValue,ErrorMessage ="Fiyat sıfırdan büyük olmalıdır")]
         public decimal Price { get; set; }
         public string Genre { get; set; } = null!;
-        public List<string> CategoryNames { get; set; } = new();
+        public List<CategoryListDto> CategoryNames { get; set; } = new ();
         public int Stock {  get; set; }
     }
 }

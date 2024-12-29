@@ -37,9 +37,9 @@ namespace BookStoreApp.Model.Repository
             return book;
         }
 
-        public Book UpdateBook(Book book)
+        public Book UpdateBook(int id, Book book)
         {
-            var existingBook = GetBookById(book.Id);
+            var existingBook = GetBookById(id);
             if (existingBook == null)
             {
                 throw new Exception($"Kitap bulunamadı: ID {book.Id}");
@@ -50,7 +50,7 @@ namespace BookStoreApp.Model.Repository
             existingBook.Price = book.Price;
             existingBook.Genre = book.Genre;
             existingBook.ISBN = book.ISBN;
-            existingBook.Categories = book.Categories;
+            existingBook.CategoryNames = book.CategoryNames;
             existingBook.Stock = book.Stock;
 
             return existingBook;

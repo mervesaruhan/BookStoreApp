@@ -29,6 +29,7 @@ namespace BookStoreApp.Model.Service
             {
                 //kategori validasyonu
                 var categories = bookDto.CategoryNames
+                    .Select(category => category.Name)
                     .Select(name => _categoryRepository.GetCategoryByName(name))
                     .Where(c => c != null).ToList();
 
@@ -39,7 +40,7 @@ namespace BookStoreApp.Model.Service
 
                 // DTO'dan Entity'ye dönüşüm
                 var book = _mapper.Map<Book>(bookDto);
-                book.Categories = categories;
+                book.CategoryNames = categories!;
 
                 // Repository'de kitap ekleme
                 var createdBook = _bookRepository.AddBook(book);
@@ -62,6 +63,7 @@ namespace BookStoreApp.Model.Service
             try
             {
                 var categories = updateBookDto.CategoryNames
+                    .Select(category => category.Name)
                     .Select(name => _categoryRepository.GetCategoryByName(name))
                     .Where(c => c != null).ToList();
 
@@ -73,9 +75,9 @@ namespace BookStoreApp.Model.Service
 
                 var book = _mapper.Map<Book>(updateBookDto);
                 book.Id = id;
-                book.Categories = categories!;
+                book.CategoryNames = categories!;
 
-                var updatedBook = _bookRepository.UpdateBook(book);
+                var updatedBook = _bookRepository.UpdateBook(id,book);
                 var result = _mapper.Map<BookDto>(updatedBook);
                 return ResponseDto<BookDto>.Succes(result);
 

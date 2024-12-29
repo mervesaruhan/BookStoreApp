@@ -1,4 +1,5 @@
 using BookStoreApp.Model.Entities;
+using BookStoreApp.Model.Extensions;
 using BookStoreApp.Model.Interface;
 using BookStoreApp.Model.Repository;
 using BookStoreApp.Model.Service;
@@ -27,27 +28,10 @@ builder.Services.AddSwaggerGen(c =>
 });
 
 
-builder.Services.AddScoped<IUserService, UserService>();
-builder.Services.AddSingleton<IUserRepository, UserRepository>();
-
-builder.Services.AddSingleton<IBookRepository, BookRepository>();
-builder.Services.AddScoped<IBookService, BookService>();
-
-builder.Services.AddSingleton<IOrderRepository, OrderRepository>();
-builder.Services.AddScoped<IOrderService, OrderService>();
-
-builder.Services.AddSingleton<ICategoryRepository, CategoryRepository>();
-builder.Services.AddScoped<ICategoryService, CategoryService>();
-
-builder.Services.AddSingleton<IPaymentRepository, PaymentRepository>();
-builder.Services.AddScoped<IPaymentService, PaymentService>();
-
-
+builder.Services.AddControllers();
+builder.Services.AddDIContainer();
 
 builder.Services.AddAutoMapper(typeof(Program));
-
-
-
 
 var app = builder.Build();
 
