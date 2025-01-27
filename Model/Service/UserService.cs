@@ -19,7 +19,7 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<UserDto> RegisterUser(UserRegisterDto userDto)
+        public async Task<ResponseDto<UserDto>> RegisterUserAsync(UserRegisterDto userDto)
         {
             // Enum doğrulama: Role değeri geçerli mi?
             if (!Enum.TryParse<UserRole>(userDto.Role.ToString(), out var parsedRole) || !Enum.IsDefined(typeof(UserRole), parsedRole))
@@ -28,28 +28,6 @@ namespace BookStoreApp.Model.Service
                 return ResponseDto<UserDto>.Fail("Geçersiz kullanıcı rolü! Sadece Admin (0) veya Customer (1) değerlerini kabul eder.");
             }
 
-            #region Manuel Mapping
-            //var user = new User
-            //{
-            //    FullName = userDto.FullName,
-            //    Email = userDto.Email,
-            //    Role = userDto.Role
-            //};
-
-            //var passwordhashsalt = createpasswordhash(userdto.password);
-            //user.passwordhash = passwordhashsalt.hash;
-            //user.passwordsalt = passwordhashsalt.salt;
-
-            //var createduser =_userRepository.Add(user);
-
-            //return new UserDto
-            //{
-            //    Id = createduser.Id,
-            //    FullName = createduser.FullName,
-            //    Email = createduser.Email,
-            //    Role = createduser.Role
-            //}; 
-            #endregion
             //UserRegisterDto -> user dönüşümü
             var user = _mapper.Map<User>(userDto);
             user.Role = parsedRole; // Doğrulanmış enum değeri atanıyor
@@ -62,7 +40,7 @@ namespace BookStoreApp.Model.Service
 
 
             //kullanıcı kaydet ve user->userdto dönüşümü
-            var createdUser = _userRepository.Add(user);
+            var createdUser =await  _userRepository.AddAsync(user);
             var userDtoResult = _mapper.Map<UserDto>(createdUser);
 
 
@@ -73,9 +51,9 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<UserDto> AuthenticateUser(UserLoginDto userLoginDto)
+        public async Task<ResponseDto<UserDto>> AuthenticateUserAsync(UserLoginDto userLoginDto)
         {
-            var user = _userRepository.GetByEmail(userLoginDto.Email);
+            var user = await _userRepository.GetByEmailAsync(userLoginDto.Email);
             if (user == null || !VerifyPassword(userLoginDto.Password, user.PasswordHash, user.PasswordSalt))
             {
                 return ResponseDto<UserDto>.Fail("Kullanıcı adı veya şifre yanlış!");
@@ -87,23 +65,13 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<UserDto>? GetUserById(int id)
+        public async Task<ResponseDto<UserDto>>? GetUserByIdAsync(int id)
         {
-            var user =_userRepository.GetById(id);
+            var user =await _userRepository.GetByIdAsync(id);
             if (user == null)
             {
                 return ResponseDto<UserDto>.Fail("Kullanıcı bulunamadı! ");
             }
-
-            #region Manuel mapping
-            //return new UserDto
-            //{
-            //    Id = user.Id,
-            //    FullName = user.FullName,
-            //    Email = user.Email,
-            //    Role = user.Role
-            //}; 
-            #endregion
 
             var result = _mapper.Map<UserDto>(user);
             return ResponseDto<UserDto>.Succes(result);
@@ -111,40 +79,30 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<List<UserDto>> GetAllUsers()
+        public async Task<ResponseDto<List<UserDto>>> GetAllUsersAsync()
         {
 
-            var users = _userRepository.GetAll();
+            var users = await _userRepository.GetAllAsync();
             if (users == null || !users.Any()) return ResponseDto<List<UserDto>>.Fail("Hiçbir kullanıcı bulunamadı.");
 
-            #region manuel mapping
-            //return users.Select(user => new UserDto
-            //{
-            //    Id=user.Id,
-            //    FullName = user.FullName,
-            //    Email = user.Email,
-            //    Role = user.Role
-
-            //}).ToList(); 
-            #endregion
             var resultList = _mapper.Map<List<UserDto>>(users);
 
             return ResponseDto<List<UserDto>>.Succes(resultList);  
         }
 
 
-        public ResponseDto<UserDto> UpdateUser(int id, UserUpdateDto updatedUserDto)
+        public async Task<ResponseDto<UserDto>> UpdateUserAsync(int id, UserUpdateDto updatedUserDto)
         {
             try
             {
-                var user = _userRepository.GetById(id);
+                var user = await _userRepository.GetByIdAsync(id);
                 if (user == null) return ResponseDto<UserDto>.Fail("Kullanıcı bulunamadı.");
 
                 user.Email = updatedUserDto.Email;
                 user.FullName = updatedUserDto.FullName;
 
 
-                var updatedUser = _userRepository.Update(user);
+                var updatedUser = _userRepository.UpdateAsync(user);
 
                 var resultDto = _mapper.Map<UserDto>(updatedUser);
 
@@ -162,9 +120,9 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<bool> DeleteUser(int id)
+        public async Task<ResponseDto<bool>> DeleteUserAsync(int id)
         {
-            var result =  _userRepository.Delete(id);
+            var result = await  _userRepository.DeleteAsync(id);
 
             if (!result) return ResponseDto<bool>.Fail("Kullanıcı bulunamadı veya silinemedi");
 

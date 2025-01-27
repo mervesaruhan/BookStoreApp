@@ -6,15 +6,15 @@ namespace BookStoreApp.Model.Interface
 {
     public interface IOrderService
     {
-        ResponseDto<OrderDto> AddOrder(int userId, OrderCreateDto orderCreateDto);
-        ResponseDto<OrderDto> GetOrderById(int id);
-        ResponseDto<List<OrderDto>> GetOrdersByUserId(int userId);
-        ResponseDto<List<OrderDto>> GetOrdersByStatus(OrderStatus status);
-        ResponseDto<OrderDto> UpdateOrderStatus(int id, OrderStatus newStatus);
-        ResponseDto<List<OrderDto>> GetAllOrders();
-        ResponseDto<OrderDto> UpdateOrderStatusAfterPayment(int orderId, PaymentStatus paymentStatus);
-        ResponseDto<OrderDto> AddItemToOrder(AddItemToOrderDto dto);
-        ResponseDto<bool> UpdateOrderItem(int orderId, int bookId, int quantity);
+        Task<ResponseDto<OrderDto>> AddOrderAsync(int userId, OrderCreateDto orderCreateDto);
+        Task<ResponseDto<OrderDto>> GetOrderByIdAsync(int id);
+        Task<ResponseDto<List<OrderDto>>> GetOrdersByUserIdAsync(int userId);
+        Task<ResponseDto<List<OrderDto>>> GetOrdersByStatusAsync(OrderStatus status);
+        Task<ResponseDto<OrderDto>> UpdateOrderStatusAsync(int id, OrderStatus newStatus);
+        Task<ResponseDto<List<OrderDto>>> GetAllOrdersAsync();
+        Task<ResponseDto<OrderDto>> UpdateOrderStatusAfterPaymentAsync(int orderId, PaymentStatus paymentStatus);
+        Task<ResponseDto<OrderDto>> AddItemToOrderAsync(AddItemToOrderDto dto);
+        Task<ResponseDto<bool>> UpdateOrderItemAsync(int orderId, int bookId, int quantity);
 
     }
 }

@@ -19,53 +19,59 @@ namespace BookStoreApp.Model.Repository
             new Category { Id = 3, Name = "Tarih" },
             new Category { Id = 4, Name = "Kişisel Gelişim" },
             new Category { Id = 5, Name = "Çocuk" },
-            new Category { Id = 5, Name = "Aşk" }
+            new Category { Id = 6, Name = "Aşk" }
         });
         }
 
 
-        public Category AddCategory(Category category)
+        public async Task<Category> AddCategoryAsync(Category category)
         {
             if (_categories.Any(c => c.Name.Equals(category.Name, StringComparison.OrdinalIgnoreCase)))
             { 
-                throw new ValidationException("Bu kategori zaten mevcut"); 
+                throw new InvalidOperationException("Bu kategori zaten mevcut"); 
             }
             category.Id = _categories.Count + 1;
             _categories.Add(category);
-            return category;
+            return await Task.FromResult(category);
         }
 
-        public Category GetCategoryById(int id)
+
+        public async Task<Category> GetCategoryByIdAsync(int id)
         {
             var category = _categories.FirstOrDefault(c => c.Id == id);
             if (category == null)
             {
-                throw new ValidationException(" Girilen ID' de kategori bulunamadı.");
+                throw new KeyNotFoundException(" Girilen ID' de kategori bulunamadı.");
             }
-            return category;
+            return await Task.FromResult(category);
         }
 
 
-        public Category? GetCategoryByName(string name)
+
+        public async Task<Category?> GetCategoryByNameAsync (string name)
         {
-            return _categories.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            var categories = _categories.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
+            return await Task.FromResult(categories);
            
         }
 
 
 
-        public List<Category> GetAllCategories()
+
+        public async Task<List<Category>> GetAllCategoriesAsync()
         {
-            return _categories;
+            return await Task.FromResult( _categories);
         }
 
 
-        public bool DeleteCategory(int id)
+
+        public async Task<bool> DeleteCategoryAsync(int id)
         {
-            var category =GetCategoryById(id);
+            var category = await GetCategoryByIdAsync(id);
             if (category == null) { return false; }
             _categories.Remove(category);
-            return true;
+
+            return await Task.FromResult(true);
         }
     }
 }

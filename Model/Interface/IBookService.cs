@@ -6,13 +6,13 @@ namespace BookStoreApp.Model.Interface
 {
     public interface IBookService
     {
-        ResponseDto<BookDto> AddBook(BookCreateDto bookDto);
-        ResponseDto<BookDto> UpdateBook(int id , UpdateBookDto updateBookDto);
-        ResponseDto<bool> DeleteBook(int id);
-        ResponseDto<BookDto> GetBookById(int id);
-        ResponseDto<List<BookDto>> GetAllBooks();
-        ResponseDto<List<BookDto>> GetBooksByGenre(string genre);
-        ResponseDto<List<BookDto>> SearchBooks(string searchText);
+        Task<ResponseDto<BookDto>> AddBookAsync(BookCreateDto bookDto);
+        Task<ResponseDto<BookDto>> UpdateBookAsync(int id , UpdateBookDto updateBookDto);
+        Task<ResponseDto<bool>> DeleteBookAsync(int id);
+        Task<ResponseDto<BookDto>> GetBookByIdAsync(int id);
+        Task<ResponseDto<List<BookDto>>> GetAllBooksAsync();
+        Task<ResponseDto<List<BookDto>>> GetBooksByGenreAsync(string genre);
+        Task<ResponseDto<List<BookDto>>> SearchBooksAsync(string searchText);
 
     }
 }

@@ -8,50 +8,55 @@ namespace BookStoreApp.Model.Repository
     {
         private readonly List<User> _users = new();
 
-        public User Add(User user)
+        public async Task<User> AddAsync(User user)
         {
-            user.Id = _users.Count + 1; // Geçici ID ataması
-            _users.Add(user);
+            await Task.Run(() =>
+            {
+                user.Id = _users.Count + 1; // Geçici ID ataması
+                _users.Add(user);
+            });
             return user;
         }
 
 
 
-        public bool Delete(int id)
+        public async Task<bool> DeleteAsync(int id)
         {
             var user =_users.FirstOrDefault(x => x.Id == id);
             if (user == null) return false;
             _users.Remove(user);
+
+            await Task.CompletedTask;
             return true;
         }
 
 
 
-        public List<User> GetAll()
+        public async Task <List<User>> GetAllAsync()
         {
-            return _users;
+            return await Task.Run (() => _users);
         }
 
 
 
-        public User? GetByEmail(string email)
+        public async Task<User?> GetByEmailAsync(string email)
         {
 
-            return _users.FirstOrDefault(u => u.Email == email);
+            return await Task.Run (() => _users.FirstOrDefault(u => u.Email == email));
         }
 
 
 
-        public User? GetById(int id)
+        public async Task<User?> GetByIdAsync(int id)
         {
-           return _users.FirstOrDefault( u => u.Id == id);
+           return await Task.Run(() =>_users.FirstOrDefault( u => u.Id == id));
         }
 
 
 
-        public User Update(User user)
+        public async Task<User> UpdateAsync(User user)
         {
-            var existingUser = GetById(user.Id);
+            var existingUser = await GetByIdAsync(user.Id);
             if (existingUser == null) throw new Exception("Kullanıcı bulunamadı.");
 
             existingUser.FullName = user.FullName;

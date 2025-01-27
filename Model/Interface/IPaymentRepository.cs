@@ -4,10 +4,10 @@ namespace BookStoreApp.Model.Interface
 {
     public interface IPaymentRepository
     {
-        Payment AddPayment(Payment payment);
-        Payment? GetPaymentById(int id);
-        List<Payment> GetPaymentsByUserId(int userId);
-        Payment? GetPaymentByOrderId(int orderId);
-        List<Payment> GetAllPayments();
+        Task<Payment> AddPaymentAsync(Payment payment);
+        Task<Payment?> GetPaymentByIdAsync(int id);
+        Task<List<Payment>> GetPaymentsByUserIdAsync(int userId);
+        Task<Payment?> GetPaymentByOrderIdAsync(int orderId);
+        Task<List<Payment>> GetAllPaymentsAsync();
     }
 }

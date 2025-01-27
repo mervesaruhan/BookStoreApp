@@ -5,10 +5,10 @@ namespace BookStoreApp.Model.Interface
 {
     public interface ICategoryService
     {
-        ResponseDto<CategoryDto> AddCategory(CategoryCreateDto createDto);
-        ResponseDto<List<CategoryDto>> GetAllCategories();
-        ResponseDto<CategoryDto> GetCategoryById(int id);
-        ResponseDto<bool> DeleteCategoryById(int id);
-        ResponseDto<CategoryDto> GetCategoryByName(string name);
+        Task<ResponseDto<CategoryDto>> AddCategoryAsync(CategoryCreateDto createDto);
+        Task<ResponseDto<List<CategoryDto>>> GetAllCategoriesAsync();
+        Task<ResponseDto<CategoryDto>> GetCategoryByIdAsync(int id);
+        Task<ResponseDto<bool>> DeleteCategoryByIdAsync(int id);
+        Task<ResponseDto<CategoryDto>> GetCategoryByNameAsync(string name);
     }
 }

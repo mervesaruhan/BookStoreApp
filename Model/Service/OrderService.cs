@@ -22,14 +22,14 @@ namespace BookStoreApp.Model.Service
         }
 
 
-        public ResponseDto<OrderDto> AddOrder(int userId, OrderCreateDto orderCreateDto)
+        public async Task<ResponseDto<OrderDto>> AddOrderAsync(int userId, OrderCreateDto orderCreateDto)
         {
             try
             {
                 // 1. Stok Kontrolü
                 foreach (var item in orderCreateDto.Items)
                 {
-                    var book = _bookRepository.GetBookById(item.BookId);
+                    var book =await _bookRepository.GetBookByIdAsync(item.BookId);
                     if (book == null)
                         return ResponseDto<OrderDto>.Fail($"Girilen ID'de kitap bulunamadı: {item.BookId}");
                     if (book.Stock < item.Quantity)
@@ -42,9 +42,9 @@ namespace BookStoreApp.Model.Service
 
                 foreach (var item in orderCreateDto.Items)
                 {
-                    var book = _bookRepository.GetBookById(item.BookId);
+                    var book = await _bookRepository.GetBookByIdAsync(item.BookId);
                     book!.Stock -= item.Quantity;
-                    _bookRepository.UpdateBook(book.Id,book);
+                    await _bookRepository.UpdateBookAsync(book.Id,book);
 
                     var orderItem = new OrderItem
                     {
@@ -66,7 +66,7 @@ namespace BookStoreApp.Model.Service
                     Status = OrderStatus.Pending
                 };
 
-                var createdOrder = _orderRepository.AddOrder(order);
+                var createdOrder =await  _orderRepository.AddOrderAsync(order);
                 var result = _mapper.Map<OrderDto>(createdOrder);
 
                 return ResponseDto<OrderDto>.Succes(result);
@@ -80,11 +80,11 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<OrderDto> GetOrderById(int id)
+        public async Task<ResponseDto<OrderDto>> GetOrderByIdAsync(int id)
         {
             try
             {
-                var order = _orderRepository.GetOrderById(id);
+                var order =await _orderRepository.GetOrderByIdAsync(id);
                 if (order == null) return ResponseDto<OrderDto>.Fail("Girilen ID'ye ait sipariş bulunamadı");
 
                 var result = _mapper.Map<OrderDto>(order);
@@ -100,11 +100,11 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<List<OrderDto>> GetOrdersByUserId (int userId)
+        public async Task<ResponseDto<List<OrderDto>>> GetOrdersByUserIdAsync(int userId)
         {
             try
             {
-                var orders = _orderRepository.GetOrdersByUserId(userId);
+                var orders =await _orderRepository.GetOrdersByUserIdAsync(userId);
                 if (orders == null || !orders.Any()) return ResponseDto<List<OrderDto>>.Fail("Girilen Id'ye ait sipariş bulunamadı.");
 
                 var result = _mapper.Map<List<OrderDto>>(orders);
@@ -118,9 +118,10 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<List<OrderDto>> GetOrdersByStatus(OrderStatus status)
+
+        public async Task<ResponseDto<List<OrderDto>>> GetOrdersByStatusAsync(OrderStatus status)
         {
-           var orders = _orderRepository.GetOrdersByStatus(status);
+           var orders = await _orderRepository.GetOrdersByStatusAsync(status);
             if (orders == null || !orders.Any()) return ResponseDto<List<OrderDto>>.Fail("Girilen durumda siprariş bulunamadı.");
 
             var result = _mapper.Map<List<OrderDto>>(orders);
@@ -130,22 +131,22 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<OrderDto> UpdateOrderStatus(int id, OrderStatus newStatus)
+        public async Task<ResponseDto<OrderDto>> UpdateOrderStatusAsync(int id, OrderStatus newStatus)
         {
             try
             {
-                var order = _orderRepository.GetOrderById(id);
+                var order = await _orderRepository.GetOrderByIdAsync(id);
                 if (order == null) return ResponseDto<OrderDto>.Fail("Girilen ID'de sipariş bulunamadı");
 
                 if (newStatus == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled)
                 {
                     foreach (var item in order.Items)
                     {
-                        var book = _bookRepository.GetBookById(item.Id);
+                        var book =await _bookRepository.GetBookByIdAsync(item.Id);
                         if (book != null)
                         {
                             book.Stock += item.Quantity;
-                            _bookRepository.UpdateBook(book.Id,book);
+                            await _bookRepository.UpdateBookAsync(book.Id,book);
                         }
                         else
                         {
@@ -157,11 +158,11 @@ namespace BookStoreApp.Model.Service
                 {
                     foreach (var item in order.Items)
                     {
-                        var book = _bookRepository.GetBookById(id);
+                        var book =await _bookRepository.GetBookByIdAsync(id);
                         if (book != null && book.Stock >= item.Quantity)
                         {
                             book.Stock -= item.Quantity;
-                            _bookRepository.UpdateBook(book.Id,book);
+                            await _bookRepository.UpdateBookAsync(book.Id,book);
                         }
                         else
                         {
@@ -171,7 +172,7 @@ namespace BookStoreApp.Model.Service
                     }
                 }
                 order.Status = newStatus;
-                _orderRepository.UpdateOrder(order);
+                await _orderRepository.UpdateOrderAsync(order);
 
                 var result = _mapper.Map<OrderDto>(order);
                 return ResponseDto<OrderDto>.Succes(result);
@@ -186,11 +187,11 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<List<OrderDto>> GetAllOrders()
+        public async Task<ResponseDto<List<OrderDto>>> GetAllOrdersAsync()
         {
             try
             {
-                var orders = _orderRepository.GetAllOrders();
+                var orders = await _orderRepository.GetAllOrdersAsync();
                 if (orders == null || !orders.Any()) return ResponseDto<List<OrderDto>>.Fail("Sipariş bulunamadı.");
 
                 var result = _mapper.Map<List<OrderDto>>(orders);
@@ -207,11 +208,11 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<OrderDto> UpdateOrderStatusAfterPayment(int orderId, PaymentStatus paymentStatus)
+        public async Task<ResponseDto<OrderDto>> UpdateOrderStatusAfterPaymentAsync(int orderId, PaymentStatus paymentStatus)
         {
             try
             {
-                var order = _orderRepository.GetOrderById(orderId);
+                var order = await _orderRepository.GetOrderByIdAsync(orderId);
                 if (order == null)
                 {
                     return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
@@ -228,7 +229,7 @@ namespace BookStoreApp.Model.Service
                     return ResponseDto<OrderDto>.Fail("Sipariş durumu ödeme tamamlanmadıgı için güncellenemedi.");
                 }
 
-                var updateOrder = _orderRepository.UpdateOrder(order);
+                var updateOrder = await _orderRepository.UpdateOrderAsync(order);
                 var result = _mapper.Map<OrderDto>(updateOrder);
 
                 return ResponseDto<OrderDto>.Succes(result);
@@ -243,20 +244,22 @@ namespace BookStoreApp.Model.Service
 
         //##############################################################
 
-        public ResponseDto<OrderDto> AddItemToOrder(AddItemToOrderDto dto)
+
+
+        public async Task<ResponseDto<OrderDto>> AddItemToOrderAsync(AddItemToOrderDto dto)
         {
             try
             {
-                var order = _orderRepository.GetOrderById(dto.OrderId);
+                var order = await _orderRepository.GetOrderByIdAsync(dto.OrderId);
                 if (order == null)
                     return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
 
-                var book = _bookRepository.GetBookById(dto.BookId);
+                var book =await _bookRepository.GetBookByIdAsync(dto.BookId);
                 if (book == null || book.Stock < dto.Quantity)
                     return ResponseDto<OrderDto>.Fail("Stok yetersiz veya kitap bulunamadı.");
 
                 book.Stock -= dto.Quantity;
-                _bookRepository.UpdateBook(book.Id,book);
+                await _bookRepository.UpdateBookAsync(book.Id,book);
 
                 order.AddItem(new OrderItem
                 {
@@ -265,7 +268,7 @@ namespace BookStoreApp.Model.Service
                     UnitPrice = book.Price
                 });
 
-                _orderRepository.UpdateOrder(order);
+                await _orderRepository.UpdateOrderAsync(order);
 
                 var result = _mapper.Map<OrderDto>(order);
                 return ResponseDto<OrderDto>.Succes(result);
@@ -279,17 +282,17 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<bool> UpdateOrderItem(int orderId, int bookId, int quantity)
+        public async Task<ResponseDto<bool>> UpdateOrderItemAsync(int orderId, int bookId, int quantity)
         {
             try
             {
-                var order = _orderRepository.GetOrderById(orderId);
+                var order = await _orderRepository.GetOrderByIdAsync(orderId);
 
                 if (order == null)
-                    return  ResponseDto<bool>.Fail("Sipari bulunamadı");
+                    return  ResponseDto<bool>.Fail("Sipariş bulunamadı");
 
                 if (order.Status != OrderStatus.Pending)
-                    return ResponseDto<bool>.Fail("SYalnızca Pending aşamasındak siparişler güncelleme yapabilir");
+                    return ResponseDto<bool>.Fail("Yalnızca Pending aşamasındak siparişler güncelleme yapabilir");
 
                 var orderItem = order.Items.FirstOrDefault(item => item.BookId == bookId);
                 if (orderItem == null)
@@ -301,7 +304,7 @@ namespace BookStoreApp.Model.Service
                     order.Items.Remove(orderItem);
 
                     // Update book stock
-                    var book = _bookRepository.GetBookById(bookId);
+                    var book =await  _bookRepository.GetBookByIdAsync(bookId);
                     if (book != null)
                         book.Stock += orderItem.Quantity;
                 }
@@ -312,12 +315,12 @@ namespace BookStoreApp.Model.Service
                     orderItem.Quantity = quantity;
 
                     // Update book stock
-                    var book = _bookRepository.GetBookById(bookId);
+                    var book = await _bookRepository.GetBookByIdAsync(bookId);
                     if (book != null)
                         book.Stock += difference;
                 }
 
-                _orderRepository.UpdateOrder(order);
+                await _orderRepository.UpdateOrderAsync(order);
                 return  ResponseDto<bool>.Succes(true);
             }
             catch (Exception ex)

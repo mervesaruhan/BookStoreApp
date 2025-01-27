@@ -4,12 +4,12 @@ namespace BookStoreApp.Model.Interface
 {
     public interface IOrderRepository
     {
-        Order AddOrder(Order order);
-        List<Order> GetAllOrders();
-        Order? GetOrderById(int id);
-        List<Order> GetOrdersByUserId(int userId);
-        Order? UpdateOrderStatus(int orderId, OrderStatus status);
-        List<Order> GetOrdersByStatus(OrderStatus status);
-        Order UpdateOrder(Order updatedOrder);
+        Task<Order> AddOrderAsync(Order order);
+        Task<List<Order>> GetAllOrdersAsync();
+        Task<Order?> GetOrderByIdAsync(int id);
+        Task<List<Order>> GetOrdersByUserIdAsync(int userId);
+        Task<Order?> UpdateOrderStatusAsync(int orderId, OrderStatus status);
+        Task<List<Order>> GetOrdersByStatusAsync(OrderStatus status);
+        Task<Order> UpdateOrderAsync(Order updatedOrder);
     }
 }

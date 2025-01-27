@@ -19,20 +19,21 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPost]
-        public IActionResult AddCategory([FromBody]CategoryCreateDto categoryDto)
+        public async Task<IActionResult> AddCategoryAsync([FromBody]CategoryCreateDto categoryDto)
         {
             if (!ModelState.IsValid) return BadRequest(ModelState);
-            var response = _categoryService.AddCategory(categoryDto);
+            var response = await _categoryService.AddCategoryAsync(categoryDto);
             if (response.Data == null) return BadRequest(response);
-            return CreatedAtAction(nameof(GetCategoryById), new { id = response.Data.Id }, response); ;
+            //return CreatedAtAction(nameof(GetCategoryByIdAsync), new { id = response.Data.Id }, response);
+            return Ok(response);
         }
 
 
 
         [HttpGet]
-        public IActionResult GetAllCategories()
+        public async Task<IActionResult> GetAllCategoriesAsync()
         {
-            var response = _categoryService.GetAllCategories();
+            var response = await _categoryService.GetAllCategoriesAsync();
             if (response.Data == null || !response.Data.Any())  return NotFound(response); 
             return Ok(response);
         }
@@ -40,9 +41,9 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("{id}")]
-        public IActionResult GetCategoryById(int id)
+        public async Task<IActionResult> GetCategoryByIdAsync(int id)
         {
-            var response = _categoryService.GetCategoryById(id);
+            var response = await _categoryService.GetCategoryByIdAsync(id);
             if (response.Data == null) return NotFound(response);
 
             return Ok(response);
@@ -53,9 +54,9 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("name/{name}")]
-        public IActionResult GetCategoryByNamed(string name)
+        public async Task<IActionResult> GetCategoryByNamedAsync(string name)
         {
-            var response = _categoryService.GetCategoryByName(name);
+            var response = await _categoryService.GetCategoryByNameAsync(name);
             if (response.Data == null) return NotFound(response);
 
             return Ok(response);
@@ -66,11 +67,15 @@ namespace BookStoreApp.Controllers
 
 
         [HttpDelete("{id}")]
-        public IActionResult DeleteCategoryById(int id)
+        public async Task<IActionResult> DeleteCategoryByIdAsync(int id)
         {
-            var response = _categoryService.DeleteCategoryById(id);
+            var response = await _categoryService.DeleteCategoryByIdAsync(id);
             if (!response.Data) return NotFound(response);
-            return NoContent();
+            return Ok(new
+            {
+                Message = "Kategori başarıyla silindi.",
+                Success = true
+            });
 
         }
     }

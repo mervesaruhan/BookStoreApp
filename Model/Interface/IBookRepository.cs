@@ -4,13 +4,13 @@ namespace BookStoreApp.Model.Interface
 {
     public interface IBookRepository
     {
-        Book AddBook(Book book);
-        Book UpdateBook(int id,Book book);
-        List<Book> GetAllBooks();
-        Book? GetBookById(int id);
-        List<Book> GetBooksByGenre(string genre);
-        List<Book> SearchBooks(string searchText);
-        bool DeleteBook(int id);
+        Task<Book> AddBookAsync(Book book);
+        Task<Book> UpdateBookAsync(int id,Book book);
+        Task<List<Book>> GetAllBooksAsync();
+        Task<Book?> GetBookByIdAsync(int id);
+        Task<List<Book>> GetBooksByGenreAsync(string genre);
+        Task<List<Book>> SearchBooksAsync(string searchText);
+        Task<bool> DeleteBookAsync(int id);
 
 
     }

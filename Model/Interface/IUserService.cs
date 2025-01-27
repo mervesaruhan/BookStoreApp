@@ -6,12 +6,12 @@ namespace BookStoreApp.Model.Interface
 {
     public interface IUserService
     {
-        ResponseDto<UserDto> RegisterUser(UserRegisterDto userDto);
-        ResponseDto<UserDto> AuthenticateUser(UserLoginDto userLoginDto);
-        ResponseDto<UserDto>? GetUserById(int id);
-        ResponseDto<List<UserDto>> GetAllUsers();
-        ResponseDto<UserDto> UpdateUser(int id, UserUpdateDto updatedUserDto);
-        ResponseDto<bool> DeleteUser(int id);
+        Task<ResponseDto<UserDto>> RegisterUserAsync(UserRegisterDto userDto);
+        Task<ResponseDto<UserDto>> AuthenticateUserAsync(UserLoginDto userLoginDto);
+        Task<ResponseDto<UserDto>>? GetUserByIdAsync(int id);
+        Task<ResponseDto<List<UserDto>>> GetAllUsersAsync();
+        Task<ResponseDto<UserDto>> UpdateUserAsync(int id, UserUpdateDto updatedUserDto);
+        Task<ResponseDto<bool>> DeleteUserAsync(int id);
 
     }
 }

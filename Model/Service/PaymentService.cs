@@ -23,12 +23,12 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<PaymentDto> AddPayment(int orderId, PaymentCreateDto paymentCreateDto)
+        public async Task<ResponseDto<PaymentDto>> AddPaymentAsync(int orderId, PaymentCreateDto paymentCreateDto)
         {
             try
             {
-                var order = _orderRepository.GetOrderById(orderId);
-                if (order == null || !order.Items.Any()) return ResponseDto<PaymentDto>.Fail("Sipariş bulunamadı veya siparişe ürün eklenmemiş");
+                var order = await _orderRepository.GetOrderByIdAsync(orderId);
+                if (order == null || !order.Items.Any()) return ResponseDto<PaymentDto>.Fail("Sipariş mevcut değil ya da siparişe bağlı ürün bulunamadı.");
 
                 var payment = _mapper.Map<Payment>(paymentCreateDto);
                 payment.Amount = order.TotalPrice;
@@ -36,8 +36,8 @@ namespace BookStoreApp.Model.Service
                 payment.OrderId = orderId;
                 payment.UserId = order.UserId;
 
-                var createPayment = _paymentRepository.AddPayment(payment);
-                _orderService.UpdateOrderStatusAfterPayment(orderId, PaymentStatus.Completed);
+                var createPayment =await _paymentRepository.AddPaymentAsync(payment);
+                await _orderService.UpdateOrderStatusAfterPaymentAsync(orderId, PaymentStatus.Completed);
                 
 
                 var result = _mapper.Map<PaymentDto>(createPayment);
@@ -52,49 +52,78 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<PaymentDto> GetPaymentById(int id)
+        public async Task<ResponseDto<PaymentDto>> GetPaymentByIdAsync(int id)
         {
-            var payment = _paymentRepository.GetPaymentById(id);
-            if (payment == null) return ResponseDto<PaymentDto>.Fail("Ödeme bulunamadı");
+            try
+            {
+                var payment = await _paymentRepository.GetPaymentByIdAsync(id);
+                if (payment == null) return ResponseDto<PaymentDto>.Fail("Ödeme bulunamadı");
 
-            var result = _mapper.Map<PaymentDto>(payment);
-            return ResponseDto<PaymentDto>.Succes(result);
+                var result = _mapper.Map<PaymentDto>(payment);
+                return ResponseDto<PaymentDto>.Succes(result);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<PaymentDto>.Fail(ex.Message);
+            }
 
         }
 
 
 
-        public ResponseDto<List<PaymentDto>> GetPaymentsByUserId(int userId)
+        public async Task<ResponseDto<List<PaymentDto>>> GetPaymentsByUserIdAsync(int userId)
         {
-            var payments = _paymentRepository.GetPaymentsByUserId(userId);
-            if (payments == null || !payments.Any()) return ResponseDto<List<PaymentDto>>.Fail("Kulanıcıya ait ödeme kulunamadı");
-            
-            var result = _mapper.Map<List<PaymentDto>>(payments);
-            return ResponseDto<List<PaymentDto>>.Succes(result);
+            try
+            {
+                var payments = await _paymentRepository.GetPaymentsByUserIdAsync(userId);
+                if (payments == null || !payments.Any()) return ResponseDto<List<PaymentDto>>.Fail("Kulanıcıya ait ödeme kulunamadı");
+
+                var result = _mapper.Map<List<PaymentDto>>(payments);
+                return ResponseDto<List<PaymentDto>>.Succes(result);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<PaymentDto>>.Fail(ex.Message);
+            }
+
         }
 
 
 
 
-        public ResponseDto<PaymentDto> GetPaymentByOrderId(int orderId)
+        public async Task<ResponseDto<PaymentDto>> GetPaymentByOrderIdAsync(int orderId)
         {
-            var payment = _paymentRepository.GetPaymentByOrderId(orderId);
-            if (payment == null) return ResponseDto<PaymentDto>.Fail("Hiç ödeme bulunamadı.");
+            try
+            {
+                var payment = await _paymentRepository.GetPaymentByOrderIdAsync(orderId);
+                if (payment == null) return ResponseDto<PaymentDto>.Fail("Verilen ID ile eşleşen bir ödeme bulunamadı.");
 
-            var result = _mapper.Map<PaymentDto>(payment);
-            return ResponseDto<PaymentDto>.Succes(result);
+                var result = _mapper.Map<PaymentDto>(payment);
+                return ResponseDto<PaymentDto>.Succes(result);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<PaymentDto>.Fail(ex.Message);
+            }
         }
 
 
 
 
-        public ResponseDto<List<PaymentDto>> GetAllPayments()
+        public async Task<ResponseDto<List<PaymentDto>>> GetAllPaymentsAsync()
         {
-            var payments = _paymentRepository.GetAllPayments();
-            if (payments == null || !payments.Any()) return ResponseDto<List<PaymentDto>>.Fail("Hiç ödeme bulunamadı.");
-            
-            var result = _mapper.Map<List<PaymentDto>>(payments);
-            return ResponseDto<List<PaymentDto>>.Succes(result);
+            try
+            {
+                var payments = await _paymentRepository.GetAllPaymentsAsync();
+                if (payments == null || !payments.Any()) return ResponseDto<List<PaymentDto>>.Fail("Hiç ödeme bulunamadı.");
+
+                var result = _mapper.Map<List<PaymentDto>>(payments);
+                return ResponseDto<List<PaymentDto>>.Succes(result);
+            }
+            catch (Exception ex)
+            {
+                return ResponseDto<List<PaymentDto>>.Fail(ex.Message);
+            }
         }
 
 

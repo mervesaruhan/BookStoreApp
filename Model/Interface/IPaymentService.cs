@@ -6,10 +6,10 @@ namespace BookStoreApp.Model.Interface
 {
     public interface IPaymentService
     {
-        ResponseDto<PaymentDto> AddPayment(int orderId, PaymentCreateDto paymentDto);
-        ResponseDto<PaymentDto> GetPaymentById(int id);
-        ResponseDto<List<PaymentDto>> GetPaymentsByUserId(int userId);
-        ResponseDto<PaymentDto> GetPaymentByOrderId(int orderId);
-        ResponseDto<List<PaymentDto>> GetAllPayments();
+        Task<ResponseDto<PaymentDto>> AddPaymentAsync(int orderId, PaymentCreateDto paymentDto);
+        Task<ResponseDto<PaymentDto>> GetPaymentByIdAsync(int id);
+        Task<ResponseDto<List<PaymentDto>>> GetPaymentsByUserIdAsync(int userId);
+        Task<ResponseDto<PaymentDto>> GetPaymentByOrderIdAsync(int orderId);
+        Task<ResponseDto<List<PaymentDto>>> GetAllPaymentsAsync();
     }
 }

@@ -4,10 +4,10 @@ namespace BookStoreApp.Model.Interface
 {
     public interface ICategoryRepository
     {
-        Category AddCategory(Category category);
-        Category GetCategoryById(int id);
-        Category? GetCategoryByName(string name);
-        List<Category> GetAllCategories();
-        bool DeleteCategory(int id);
+        Task<Category> AddCategoryAsync(Category category);
+        Task<Category> GetCategoryByIdAsync(int id);
+        Task<Category?> GetCategoryByNameAsync(string name);
+        Task<List<Category>> GetAllCategoriesAsync();
+        Task<bool> DeleteCategoryAsync(int id);
     }
 }

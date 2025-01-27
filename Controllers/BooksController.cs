@@ -18,10 +18,25 @@ namespace BookStoreApp.Controllers
 
 
 
-        [HttpGet]
-        public IActionResult GetAllBooks()
+        [HttpPost]
+        public async Task<IActionResult> AddBookAsync(BookCreateDto bookDto)
         {
-            var response = _bookService.GetAllBooks();
+            if (!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi");
+
+            var response = await _bookService.AddBookAsync(bookDto);
+            if (response.Data == null) return BadRequest(response);
+
+            //return CreatedAtAction(nameof(GetBookByIdAsync), new { id = response.Data.Id }, response);
+            return Ok(response);
+            
+        }
+
+
+
+        [HttpGet]
+        public async Task<IActionResult> GetAllBooksAsync()
+        {
+            var response = await _bookService.GetAllBooksAsync();
             if (response.Data == null || !response.Data.Any()) return NotFound(response);
 
             return Ok(response);
@@ -30,9 +45,9 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("{id}")]
-        public IActionResult GetBookById(int id)
+        public async Task<IActionResult> GetBookByIdAsync(int id)
         {
-            var response = _bookService.GetBookById(id);
+            var response = await _bookService.GetBookByIdAsync(id);
             if (response.Data == null) return NotFound(response);
 
             return Ok(response);
@@ -40,43 +55,32 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet ("genre/{genre}")]
-        public IActionResult GetBooksByGenre(string genre)
+        public async Task<IActionResult> GetBooksByGenreAsync(string genre)
         {
-            var response = _bookService.GetBooksByGenre(genre);
-            if (response.Data == null || !response.Data.Any()) return NotFound(Response);
+            var response = await _bookService.GetBooksByGenreAsync(genre);
+            if (response.Data == null || !response.Data.Any()) return NotFound(response);
             return Ok(response);
         }
 
 
-        [HttpGet("search / {searchText}")]
-        public IActionResult SearchBook(string searchText)
+        [HttpGet("search/{searchText}")]
+        public async Task<IActionResult> SearchBookAsync(string searchText)
         {
-            var response = _bookService.SearchBooks(searchText);
-            if (response.Data == null || !response.Data.Any()) { return NotFound(Response); }
+            var response = await _bookService.SearchBooksAsync(searchText);
+            if (response.Data == null || !response.Data.Any()) { return NotFound(response); }
             return Ok(response);
         }
 
 
 
-
-        [HttpPost]
-        public IActionResult AddBook(BookCreateDto bookDto)
-        {
-            if (!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi");
-
-            var response = _bookService.AddBook(bookDto);
-            if (response.Data == null ) return BadRequest(response);
-
-            return CreatedAtAction(nameof(GetBookById), new { id = response.Data.Id }, response);
-        }
 
 
         [HttpPut ("{id}")]
-        public IActionResult UpdateBook(int id,  [FromBody] UpdateBookDto updateBookDto)
+        public async Task<IActionResult> UpdateBookAsync(int id,  [FromBody] UpdateBookDto updateBookDto)
         {
             if(!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi");
 
-            var response = _bookService.UpdateBook(id, updateBookDto);
+            var response = await _bookService.UpdateBookAsync(id, updateBookDto);
             if (response.Data == null) return NotFound("Kitap bulunamadı!");
             return Ok(response);
 
@@ -84,10 +88,10 @@ namespace BookStoreApp.Controllers
 
 
         [HttpDelete ("{id}")]
-        public IActionResult DeleteBook(int id)
+        public async Task<IActionResult> DeleteBookAsync(int id)
         {
-            var response = _bookService?.DeleteBook(id);
-            if (!response.Data ) return BadRequest(response);
+            var response =await  _bookService.DeleteBookAsync(id);
+            if (!response.Data ) return NotFound(response);
             return NoContent();
         }
     }

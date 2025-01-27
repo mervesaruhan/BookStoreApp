@@ -10,37 +10,44 @@ namespace BookStoreApp.Model.Repository
 
         private static readonly List<Payment> _payments = new();
 
-        public Payment AddPayment(Payment payment)
+
+        public async Task<Payment> AddPaymentAsync(Payment payment)
         {
             payment.Id = _payments.Count + 1;
             payment.PaymentDate = DateTime.UtcNow;
             _payments.Add(payment);
-            return payment;
+
+            return await Task.FromResult(payment);
         }
 
 
-        public Payment? GetPaymentById(int id)
+        public async Task<Payment?> GetPaymentByIdAsync(int id)
         {
-            return _payments.FirstOrDefault(p => p.Id == id);
-        }
-
-
-
-        public List<Payment> GetPaymentsByUserId(int userId)
-        {
-            return _payments.Where(p =>p.UserId == userId).ToList();
+            var payment = _payments.FirstOrDefault(p => p.Id == id);
+            if (payment == null)  throw new KeyNotFoundException("Ödeme bulunamadı");
+            return await Task.FromResult(payment);
         }
 
 
 
-        public Payment? GetPaymentByOrderId(int orderId)
+        public async Task<List<Payment>> GetPaymentsByUserIdAsync(int userId)
         {
-            return _payments.SingleOrDefault(p => p.OrderId == orderId);
+            var payments = _payments.Where(p => p.UserId == userId).ToList();
+            return await Task.FromResult(payments);
         }
 
-        public List<Payment> GetAllPayments()
+
+
+        public async Task<Payment?> GetPaymentByOrderIdAsync(int orderId)
         {
-            return _payments;
+            var payments = _payments.SingleOrDefault(p => p.OrderId == orderId);
+            return await Task.FromResult(payments);
+        }
+
+        public async Task<List<Payment>> GetAllPaymentsAsync()
+        {
+            var paymentsList = _payments;
+            return await Task.FromResult(paymentsList);
         }
 
 

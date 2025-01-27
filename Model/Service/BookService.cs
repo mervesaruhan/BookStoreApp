@@ -23,27 +23,43 @@ namespace BookStoreApp.Model.Service
         }
 
 
-        public ResponseDto<BookDto> AddBook(BookCreateDto bookDto)
+        public async Task<ResponseDto<BookDto>> AddBookAsync(BookCreateDto bookDto)
         {
             try
             {
-                //kategori validasyonu
-                var categories = bookDto.CategoryNames
-                    .Select(category => category.Name)
-                    .Select(name => _categoryRepository.GetCategoryByName(name))
-                    .Where(c => c != null).ToList();
+                #region LINQ Eskı Yontem
+                ////kategori validasyonu
+                //var categories = bookDto.CategoryNames
+                //    .Select(category => category.Name)
+                //    .Select(name => _categoryRepository.GetCategoryByNameAsync(name))
+                //    .Where(c => c != null).ToList();
 
-                if (!categories.Any())
+                //if (!categories.Any())
+                //{
+                //    return ResponseDto<BookDto>.Fail("Hiçbir kategori bulunamadı.");
+                //}
+                #endregion
+                var categoriesTask = new List<Category?>();
+
+                foreach(var categoryName in bookDto.CategoryNames.Select(c=> c.Name))
                 {
-                    return ResponseDto<BookDto>.Fail("Hiçbir kategori bulunamadı.");
+                    var category = await _categoryRepository.GetCategoryByNameAsync(categoryName);
+                    if (category != null) categoriesTask.Add(category);
+
                 }
+                if (!categoriesTask.Any())
+                {
+                    return ResponseDto<BookDto>.Fail("Eklenen kitaba ait bir kategori blunmamaktadır.");
+                }
+
+
 
                 // DTO'dan Entity'ye dönüşüm
                 var book = _mapper.Map<Book>(bookDto);
-                book.CategoryNames = categories!;
+                book.CategoryNames = categoriesTask!;
 
                 // Repository'de kitap ekleme
-                var createdBook = _bookRepository.AddBook(book);
+                var createdBook =await _bookRepository.AddBookAsync(book);
 
                 // Entity'den DTO'ya dönüşüm
                 var result = _mapper.Map<BookDto>(createdBook);
@@ -58,26 +74,39 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<BookDto> UpdateBook(int id, UpdateBookDto updateBookDto)
+        public async Task<ResponseDto<BookDto>> UpdateBookAsync(int id, UpdateBookDto updateBookDto)
         {
             try
             {
-                var categories = updateBookDto.CategoryNames
-                    .Select(category => category.Name)
-                    .Select(name => _categoryRepository.GetCategoryByName(name))
-                    .Where(c => c != null).ToList();
+                #region LINQ Eskı Yontem
+                //var categories = updateBookDto.CategoryNames
+                //    .Select(category => category.Name)
+                //    .Select(name => _categoryRepository.GetCategoryByNameAsync(name))
+                //    .Where(c => c != null).ToList();
 
-                if (!categories.Any())
+                //if (!categories.Any())
+                //{
+                //    return ResponseDto<BookDto>.Fail("Geçersiz kategori ismi girildi");
+                //}
+                #endregion
+                var categoriesTask = new List<Category?>();
+
+                foreach (var categoryName in updateBookDto.CategoryNames.Select(c => c.Name))
                 {
-                    return ResponseDto<BookDto>.Fail("Geçersiz kategori ismi girildi");
+                    var category = await _categoryRepository.GetCategoryByNameAsync(categoryName);
+                    if (category != null) categoriesTask.Add(category);
+                }
+                if (!categoriesTask.Any())
+                {
+                    return ResponseDto<BookDto>.Fail("Güncellenen kitaba ait bir kategori bulunmamaktadır.");
                 }
 
 
                 var book = _mapper.Map<Book>(updateBookDto);
                 book.Id = id;
-                book.CategoryNames = categories!;
+                book.CategoryNames = categoriesTask!;
 
-                var updatedBook = _bookRepository.UpdateBook(id,book);
+                var updatedBook = await _bookRepository.UpdateBookAsync(id,book);
                 var result = _mapper.Map<BookDto>(updatedBook);
                 return ResponseDto<BookDto>.Succes(result);
 
@@ -91,9 +120,9 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<bool> DeleteBook(int id)
+        public async Task<ResponseDto<bool>> DeleteBookAsync(int id)
         {
-            var isDeleted = _bookRepository.DeleteBook(id);
+            var isDeleted = await _bookRepository.DeleteBookAsync(id);
             if (!isDeleted) return ResponseDto<bool>.Fail("Kitap bulunamadı");
 
             return ResponseDto<bool>.Succes(true);
@@ -101,9 +130,9 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<BookDto> GetBookById(int id)
+        public async Task<ResponseDto<BookDto>> GetBookByIdAsync(int id)
         {
-            var bookEntity = _bookRepository.GetBookById(id);
+            var bookEntity = await _bookRepository.GetBookByIdAsync(id);
 
             if (bookEntity == null) return ResponseDto<BookDto>.Fail("Kitap bulunamadı.");
 
@@ -113,18 +142,18 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<List<BookDto>> GetAllBooks()
+        public async Task<ResponseDto<List<BookDto>>> GetAllBooksAsync()
         {
-            var listBook = _bookRepository.GetAllBooks();
+            var listBook = await _bookRepository.GetAllBooksAsync();
             var result = _mapper.Map<List<BookDto>>(listBook);
             return ResponseDto<List<BookDto>>.Succes(result);
         }
 
 
 
-        public ResponseDto<List<BookDto>> GetBooksByGenre(string genre)
+        public async Task<ResponseDto<List<BookDto>>> GetBooksByGenreAsync(string genre)
         {
-            var listBooks = _bookRepository.GetBooksByGenre(genre);
+            var listBooks = await _bookRepository.GetBooksByGenreAsync(genre);
             if (listBooks == null || !listBooks.Any()) return ResponseDto<List<BookDto>>.Fail("Bu türe ait kitap bulunamadı");
 
             var result = _mapper.Map<List<BookDto>>(listBooks);
@@ -134,9 +163,9 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<List<BookDto>> SearchBooks (string searchText)
+        public async Task<ResponseDto<List<BookDto>>> SearchBooksAsync (string searchText)
         {
-            var listBooks = _bookRepository.SearchBooks(searchText);
+            var listBooks =await _bookRepository.SearchBooksAsync(searchText);
             if (listBooks == null || !listBooks.Any())
             {
                 return ResponseDto<List<BookDto>>.Fail("Aradığınız kitap bulunumadı");

@@ -17,17 +17,17 @@ namespace BookStoreApp.Model.Service
             _mapper = mapper;
         }
 
-        public ResponseDto<CategoryDto> AddCategory(CategoryCreateDto createDto)
+        public async Task<ResponseDto<CategoryDto>> AddCategoryAsync(CategoryCreateDto createDto)
         {
 
-            var existingCategory = _categoryRepository.GetCategoryByName(createDto.Name);
+            var existingCategory = await _categoryRepository.GetCategoryByNameAsync(createDto.Name);
             if (existingCategory != null) 
             { 
                 return ResponseDto<CategoryDto>.Fail("Girilen kategori zaten mevcut!"); 
             }
 
             var category = _mapper.Map<Category>(createDto);
-            var createdCategory =_categoryRepository.AddCategory(category);
+            var createdCategory = await _categoryRepository.AddCategoryAsync(category);
             var result = _mapper.Map<CategoryDto>(createdCategory);
 
             return ResponseDto<CategoryDto>.Succes(result);
@@ -35,25 +35,27 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<List<CategoryDto>> GetAllCategories()
+        public async Task<ResponseDto<List<CategoryDto>>> GetAllCategoriesAsync()
         {
-            var categories = _categoryRepository.GetAllCategories();
+            var categories = await _categoryRepository.GetAllCategoriesAsync();
             var result = _mapper.Map<List<CategoryDto>>(categories);
+
             return ResponseDto<List<CategoryDto>>.Succes(result);
         }
 
 
 
-        public ResponseDto<CategoryDto> GetCategoryById(int id)
+        public async Task<ResponseDto<CategoryDto>> GetCategoryByIdAsync(int id)
         {
             try
             {
-                var category = _categoryRepository.GetCategoryById(id);
+                var category = await  _categoryRepository.GetCategoryByIdAsync(id);
                 if (category == null) return ResponseDto<CategoryDto>.Fail("Kategori bulunamadı");
+
                 var result = _mapper.Map<CategoryDto>(category);
                 return ResponseDto<CategoryDto>.Succes(result);
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
                 return ResponseDto<CategoryDto>.Fail(ex.Message);
             }
@@ -62,18 +64,18 @@ namespace BookStoreApp.Model.Service
 
 
 
-        public ResponseDto<bool> DeleteCategoryById(int id)
+        public async Task<ResponseDto<bool>> DeleteCategoryByIdAsync(int id)
         {
-            var isDeleted =_categoryRepository.DeleteCategory(id);
+            var isDeleted = await _categoryRepository.DeleteCategoryAsync(id);
             if (!isDeleted) return ResponseDto<bool>.Fail("kategori bulunamadı");
             return ResponseDto<bool>.Succes(true);
 
         }
 
 
-        public ResponseDto<CategoryDto> GetCategoryByName(string name)
+        public async Task<ResponseDto<CategoryDto>> GetCategoryByNameAsync(string name)
         {
-            var category = _categoryRepository.GetCategoryByName(name);
+            var category = await _categoryRepository.GetCategoryByNameAsync(name);
             if (category == null) return ResponseDto<CategoryDto>.Fail("Girilen isimde kategori bulunamamıştır.");
 
             var result = _mapper.Map<CategoryDto>(category);

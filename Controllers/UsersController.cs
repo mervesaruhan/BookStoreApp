@@ -24,15 +24,16 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPost ("register")]
-        public IActionResult RegisterUser(UserRegisterDto userDto)
+        public async Task<IActionResult> RegisterUserAsync(UserRegisterDto userDto)
         {
             if (!ModelState.IsValid) { return BadRequest("Geçersiz veri gönderildi"); }
 
-            var response = _userService.RegisterUser(userDto);
+            var response = await _userService.RegisterUserAsync(userDto);
 
             if (response.Data != null)
             {
-                return CreatedAtAction(nameof(GetUserById), new { id = response.Data.Id }, response);
+                //return CreatedAtAction(nameof(GetUserByIdAsync), new { id = response.Data.Id }, response);
+                return Ok(response);
             }
 
             return BadRequest(response.Errors);
@@ -44,11 +45,11 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPost("login")]
-        public IActionResult LoginUser(UserLoginDto userLoginDto)
+        public async Task<IActionResult> LoginUserAsync(UserLoginDto userLoginDto)
         {
             if (!ModelState.IsValid) return BadRequest("Kullanıcı adı veya şifre yanlış.");
 
-            var response = _userService.AuthenticateUser(userLoginDto);
+            var response =await  _userService.AuthenticateUserAsync(userLoginDto);
             if (response.Data == null)
             {
                 return Unauthorized(response);
@@ -59,35 +60,11 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet]
-        public IActionResult GetAllUsers()
+        public async Task<IActionResult> GetAllUsersAsync()
         {
-            var response = _userService.GetAllUsers();
+            var response =await _userService.GetAllUsersAsync();
             if (response.Data == null || !response.Data.Any()) return NotFound(response);
 
-            #region AlternativeWay
-            //var userDtos = users.Select(user => new UserDto
-            //{
-            //    Id = user.Id,
-            //    FullName = user.FullName,
-            //    Email = user.Email,
-            //    Role = user.Role
-            //}).ToList(); 
-            #endregion
-
-            #region Response Former
-            //var userDtos = new List<UserDto>();
-            //foreach (var user in users)
-            //{
-            //    var userDto = new UserDto
-            //    {
-            //        Id =user.Id,
-            //        FullName = user.FullName,
-            //        Email = user.Email,
-            //        Role = user.Role
-            //    };
-            //    userDtos.Add(userDto);
-            //} 
-            #endregion
 
             return Ok(response);
 
@@ -99,9 +76,9 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("{id}")]
-        public IActionResult GetUserById(int id)
+        public async Task<IActionResult> GetUserByIdAsync(int id)
         {
-            var response = _userService.GetUserById(id);
+            var response = await _userService.GetUserByIdAsync(id);
             if (response?.Data == null) return NotFound(response);
             return Ok(response);
         }
@@ -109,10 +86,10 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPut("{id}")]
-        public IActionResult UpdateUser(int id, UserUpdateDto updatedUserDto)
+        public async Task<IActionResult> UpdateUserAsync(int id, UserUpdateDto updatedUserDto)
         {
    
-            var response = _userService.UpdateUser(id,  updatedUserDto);
+            var response = await _userService.UpdateUserAsync(id,  updatedUserDto);
             if (response.Data == null) return NotFound(response);
 
             return Ok(response);
@@ -123,9 +100,9 @@ namespace BookStoreApp.Controllers
 
 
         [HttpDelete ("{id}")]
-        public IActionResult DeleteUser(int id)
+        public async Task<IActionResult> DeleteUserAsync(int id)
         {
-            var response = _userService.DeleteUser(id);
+            var response =await _userService.DeleteUserAsync(id);
             if (!response.Data) return NotFound(response);
 
             return NoContent();

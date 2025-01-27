@@ -19,22 +19,30 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPost]
-        public IActionResult AddPayment(int orderId, PaymentCreateDto paymentCreateDto)
+        public async Task<IActionResult> AddPaymentAsync(int orderId, PaymentCreateDto paymentCreateDto)
         {
             if (!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi");
 
-            var response = _paymentService.AddPayment(orderId, paymentCreateDto);
-            if (response.Data == null) return NotFound(response);
+            var response = await _paymentService.AddPaymentAsync(orderId, paymentCreateDto);
+            if (response.Data == null)
+            {
+                return NotFound(new
+                {
+                    Message = "Siparişe ait ödeme bulunamadı.",
+                    Errors = response.Errors
+                });
+            }
 
-            return CreatedAtAction(nameof(GetPaymentById), new { id = response.Data.Id }, response);
+            //return CreatedAtAction(nameof(GetPaymentByIdAsync), new { id = response.Data.Id }, response);
+            return Ok(response);
 
         }
 
 
         [HttpGet("{id}")]
-        public IActionResult GetPaymentById(int id)
+        public async Task<IActionResult> GetPaymentByIdAsync(int id)
         {
-            var response = _paymentService.GetPaymentById(id);
+            var response = await  _paymentService.GetPaymentByIdAsync(id);
             if (response.Data == null) return NotFound(response);
 
             return Ok(response);
@@ -44,9 +52,9 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("user/{userId}")]
-        public IActionResult GetPaymentsByUserId(int userId)
+        public async Task<IActionResult> GetPaymentsByUserIdAsync(int userId)
         {
-            var response = _paymentService.GetPaymentsByUserId(userId);
+            var response = await _paymentService.GetPaymentsByUserIdAsync(userId);
             if (response.Data == null || !response.Data.Any()) return NotFound(response);
 
             return Ok(response);
@@ -55,19 +63,19 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("order/{orderId}")]
-        public IActionResult GetPaymentByOrderId( int orderId)
+        public async Task<IActionResult> GetPaymentByOrderIdAsync( int orderId)
         {
-            var response = _paymentService.GetPaymentByOrderId((int)orderId);
-            if (response == null ) return NotFound(response);
+            var response = await _paymentService.GetPaymentByOrderIdAsync((int)orderId);
+            if (response.Data == null ) return NotFound(response);
             return Ok(response);
         }
 
 
 
         [HttpGet]
-        public IActionResult GetAllPayments()
+        public async Task<IActionResult> GetAllPaymentsAsync()
         {
-            var response = _paymentService.GetAllPayments();
+            var response = await _paymentService.GetAllPaymentsAsync();
             if (response.Data == null || !response.Data.Any()) return NotFound(response);
 
             return Ok(response);

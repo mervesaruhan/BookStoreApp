@@ -12,7 +12,7 @@ namespace BookStoreApp.Model.Repository
 
         private readonly List<Book> _books = new();
 
-        public  Book AddBook(Book book)
+        public  async Task<Book> AddBookAsync(Book book)
         {
             // 1. Doğrulama
             if (string.IsNullOrEmpty(book.Title) || string.IsNullOrEmpty(book.Author))
@@ -31,15 +31,15 @@ namespace BookStoreApp.Model.Repository
 
 
             // 4. Kitap Ekleme
-            _books.Add(book);
+           await Task.Run(() => _books.Add(book));
 
             // 5. Başarılı Yanıt
             return book;
         }
 
-        public Book UpdateBook(int id, Book book)
+        public async Task<Book> UpdateBookAsync(int id, Book book)
         {
-            var existingBook = GetBookById(id);
+            var existingBook = await GetBookByIdAsync(id);
             if (existingBook == null)
             {
                 throw new Exception($"Kitap bulunamadı: ID {book.Id}");
@@ -53,46 +53,51 @@ namespace BookStoreApp.Model.Repository
             existingBook.CategoryNames = book.CategoryNames;
             existingBook.Stock = book.Stock;
 
-            return existingBook;
+            return await Task.FromResult(existingBook);
 
         }
 
-        public List<Book> GetAllBooks()
+        public async Task<List<Book>> GetAllBooksAsync()
         {
-            return _books;
+            await Task.CompletedTask;
+            return  _books;
         }
 
 
 
-        public Book? GetBookById(int id)
+        public async Task<Book?> GetBookByIdAsync(int id)
         {
-            return _books.FirstOrDefault(x => x.Id == id);
+            var books = _books.FirstOrDefault(x => x.Id == id);
+            return await Task.FromResult(books);
         }
 
-        public List<Book> GetBooksByGenre(string genre)
+
+        public async Task<List<Book>> GetBooksByGenreAsync(string genre)
         {
             var books = _books.Where(g => g.Genre.Equals(genre, StringComparison.OrdinalIgnoreCase)).ToList();
 
-            return books;
+            return await Task.FromResult(books);
         }
 
-        public List<Book> SearchBooks(string searchText)
+        public async Task<List<Book>> SearchBooksAsync(string searchText)
         {
-            return _books
+            return await Task.Run(() =>_books
                 .Where(book =>
                     book.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
                     book.Author.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
                     book.Publisher.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                .ToList();
+                .ToList());
         }
 
 
 
-        public bool DeleteBook(int id)
+        public async Task<bool> DeleteBookAsync(int id)
         {
-            var book = GetBookById(id);
+            var book = await GetBookByIdAsync(id);
             if (book == null) return false;
             _books.Remove(book);
+
+            await Task.CompletedTask;
             return true;
         }
 
