@@ -1,6 +1,6 @@
 ﻿using BookStoreApp.Model.Entities;
 
-namespace BookStoreApp.Model.DTO
+namespace BookStoreApp.Model.DTO.UserDtos
 {
     public class UserDto
     {

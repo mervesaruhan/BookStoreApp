@@ -1,4 +1,4 @@
-﻿using BookStoreApp.Model.DTO;
+﻿using BookStoreApp.Model.DTO.UserDtos;
 using BookStoreApp.Model.Entities;
 using BookStoreApp.Model.Interface;
 using Microsoft.AspNetCore.Http;
@@ -24,20 +24,19 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPost ("register")]
-        public IActionResult RegisterUser(UserRegisterDto userDto)
+        public async Task<IActionResult> RegisterUserAsync(UserRegisterDto userDto)
         {
-            #region Comment
-            //var user = new User
-            //{
-            //    FullName = userDto.FullName,
-            //    Email = userDto.Email,
-            //    Role = userDto.Role
-            //}; 
-            #endregion
-            var createdUser = _userService.RegisterUser(userDto);
+            if (!ModelState.IsValid) { return BadRequest("Geçersiz veri gönderildi"); }
 
+            var response = await _userService.RegisterUserAsync(userDto);
 
-            return CreatedAtAction(nameof(GetUserById), new { id = createdUser.Id }, createdUser);
+            if (response.Data != null)
+            {
+                //return CreatedAtAction(nameof(GetUserByIdAsync), new { id = response.Data.Id }, response);
+                return Ok(response);
+            }
+
+            return BadRequest(response.Errors);
 
         }
 
@@ -46,49 +45,28 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPost("login")]
-        public IActionResult LoginUser(UserLoginDto userLoginDto)
+        public async Task<IActionResult> LoginUserAsync(UserLoginDto userLoginDto)
         {
-            var (user, message) = _userService.AuthenticateUser(userLoginDto);
-            if (user == null)
+            if (!ModelState.IsValid) return BadRequest("Kullanıcı adı veya şifre yanlış.");
+
+            var response =await  _userService.AuthenticateUserAsync(userLoginDto);
+            if (response.Data == null)
             {
-                return Unauthorized("Kullanıcı adı veya şifre yanlış");
+                return Unauthorized(response);
             }
 
-            return Ok("Giriş başarılı!");
+            return Ok(response);
         }
 
 
         [HttpGet]
-        public IActionResult GetAllUsers()
+        public async Task<IActionResult> GetAllUsersAsync()
         {
-            var users = _userService.GetAllUsers();
+            var response =await _userService.GetAllUsersAsync();
+            if (response.Data == null || !response.Data.Any()) return NotFound(response);
 
-            #region AlternativeWay
-            //var userDtos = users.Select(user => new UserDto
-            //{
-            //    Id = user.Id,
-            //    FullName = user.FullName,
-            //    Email = user.Email,
-            //    Role = user.Role
-            //}).ToList(); 
-            #endregion
 
-            #region Response Former
-            //var userDtos = new List<UserDto>();
-            //foreach (var user in users)
-            //{
-            //    var userDto = new UserDto
-            //    {
-            //        Id =user.Id,
-            //        FullName = user.FullName,
-            //        Email = user.Email,
-            //        Role = user.Role
-            //    };
-            //    userDtos.Add(userDto);
-            //} 
-            #endregion
-
-            return Ok(users);
+            return Ok(response);
 
         }
 
@@ -98,23 +76,23 @@ namespace BookStoreApp.Controllers
 
 
         [HttpGet("{id}")]
-        public IActionResult GetUserById(int id)
+        public async Task<IActionResult> GetUserByIdAsync(int id)
         {
-            var user = _userService.GetUserById(id);
-            if (user == null) return NotFound();
-            return Ok(user);
+            var response = await _userService.GetUserByIdAsync(id);
+            if (response?.Data == null) return NotFound(response);
+            return Ok(response);
         }
 
 
 
         [HttpPut("{id}")]
-        public IActionResult UpdateUser(int id, UserUpdateDto updatedUserDto)
+        public async Task<IActionResult> UpdateUserAsync(int id, UserUpdateDto updatedUserDto)
         {
    
-            var result = _userService.UpdateUser(id,  updatedUserDto);
-            if (result == null) return NotFound("Kullanıcı bulunamadı.");
+            var response = await _userService.UpdateUserAsync(id,  updatedUserDto);
+            if (response.Data == null) return NotFound(response);
 
-            return Ok(result);
+            return Ok(response);
 
         }
 
@@ -122,14 +100,24 @@ namespace BookStoreApp.Controllers
 
 
         [HttpDelete ("{id}")]
-        public IActionResult DeleteUser(int id)
+        public async Task<IActionResult> DeleteUserAsync(int id)
         {
-            var result = _userService.DeleteUser(id);
-            if (!result) return NotFound("Kullanıcı bulunamadı.");
+            var response =await _userService.DeleteUserAsync(id);
+            if (!response.Data) return NotFound(response);
 
             return NoContent();
         }
 
+
+        [HttpGet("roles")]
+        public IActionResult GetUserRoles()
+        {
+            var roles = Enum.GetValues(typeof(UserRole))
+                            .Cast<UserRole>()
+                            .Select(r => new { Key = (int)r, Value = r.ToString() })
+                            .ToList();
+            return Ok(roles);
+        }
 
 
 
