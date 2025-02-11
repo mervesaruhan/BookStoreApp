@@ -1,57 +1,57 @@
 ﻿using BookStoreApp.Model.Entities;
 using System.ComponentModel.DataAnnotations;
 using BookStoreApp.Model.Interface;
+using Microsoft.EntityFrameworkCore;
+using BookStoreApp.Model.Shared;
 
 namespace BookStoreApp.Model.Repository
 {
     public class CategoryRepository : ICategoryRepository
     {
 
-        private static readonly List<Category> _categories = new();
+        private readonly AppDbContext _context;
 
-        public CategoryRepository()
+        public CategoryRepository(AppDbContext context)
         {
-            // Hazır kategoriler ekleniyor
-            _categories.AddRange(new List<Category>
-        {
-            new Category { Id = 1, Name = "Roman" },
-            new Category { Id = 2, Name = "Bilim Kurgu" },
-            new Category { Id = 3, Name = "Tarih" },
-            new Category { Id = 4, Name = "Kişisel Gelişim" },
-            new Category { Id = 5, Name = "Çocuk" },
-            new Category { Id = 6, Name = "Aşk" }
-        });
+            _context = context;
         }
+       
 
 
         public async Task<Category> AddCategoryAsync(Category category)
         {
-            if (_categories.Any(c => c.Name.Equals(category.Name, StringComparison.OrdinalIgnoreCase)))
-            { 
-                throw new InvalidOperationException("Bu kategori zaten mevcut"); 
-            }
-            category.Id = _categories.Count + 1;
-            _categories.Add(category);
-            return await Task.FromResult(category);
+            bool categoryExist = await _context.Categories.AnyAsync(c => c.Name.ToLower() == category.Name.ToLower());
+            if (categoryExist) throw new InvalidOperationException("Girilen kategory zaten mevcut");
+
+            await _context.Categories.AddAsync(category);
+            await _context.SaveChangesAsync();
+
+            return category;
         }
 
 
         public async Task<Category> GetCategoryByIdAsync(int id)
         {
-            var category = _categories.FirstOrDefault(c => c.Id == id);
+            var category = await _context.Categories.AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Id == id);
             if (category == null)
             {
                 throw new KeyNotFoundException(" Girilen ID' de kategori bulunamadı.");
             }
-            return await Task.FromResult(category);
+            return category;
         }
 
 
 
         public async Task<Category?> GetCategoryByNameAsync (string name)
         {
-            var categories = _categories.FirstOrDefault(n => n.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
-            return await Task.FromResult(categories);
+            var category = await _context.Categories
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.Name.ToLower() == name.ToLower());
+
+            if (category == null) throw new KeyNotFoundException($"'{name}': isimde kategori bulunamadı.");
+
+            return category;
            
         }
 
@@ -60,18 +60,38 @@ namespace BookStoreApp.Model.Repository
 
         public async Task<List<Category>> GetAllCategoriesAsync()
         {
-            return await Task.FromResult( _categories);
+            return await _context.Categories.AsNoTracking()
+                .ToListAsync();
         }
 
 
 
         public async Task<bool> DeleteCategoryAsync(int id)
         {
-            var category = await GetCategoryByIdAsync(id);
-            if (category == null) { return false; }
-            _categories.Remove(category);
+            var category = await _context.Categories
+                .Include(c => c.BookCategories)
+                .FirstOrDefaultAsync(c => c.Id == id);
 
-            return await Task.FromResult(true);
+            if (category == null) throw new KeyNotFoundException($"ID: '{id} ile kateori kaydı bulunamadı.");
+
+            //ilişkili bookcategory kayıtlarının silinmesi lazım
+            _context.BookCategories.RemoveRange(category.BookCategories);
+
+            _context.Categories.Remove(category);
+            await _context.SaveChangesAsync();
+
+            return true;
         }
+
+
+
+        public async Task<List<int>> GetExistingCategoryIdsAsync(List<int> categoryIds)
+        {
+            return await _context.Categories
+                .Where(c => categoryIds.Contains(c.Id))
+                .Select(c => c.Id)
+                .ToListAsync();
+        }
+
     }
 }

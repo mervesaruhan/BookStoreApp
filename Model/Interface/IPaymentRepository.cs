@@ -1,4 +1,5 @@
 ﻿using BookStoreApp.Model.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BookStoreApp.Model.Interface
 {
@@ -9,5 +10,7 @@ namespace BookStoreApp.Model.Interface
         Task<List<Payment>> GetPaymentsByUserIdAsync(int userId);
         Task<Payment?> GetPaymentByOrderIdAsync(int orderId);
         Task<List<Payment>> GetAllPaymentsAsync();
+        Task UpdatePaymentAsync(Payment payment);
+        Task<IDbContextTransaction> BeginTransactionAsync();
     }
 }

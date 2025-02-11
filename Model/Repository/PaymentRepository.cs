@@ -1,54 +1,103 @@
 ﻿using BookStoreApp.Model.Entities;
 using BookStoreApp.Model.Interface;
+using BookStoreApp.Model.Shared;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Storage;
 using System.ComponentModel.DataAnnotations;
 
 namespace BookStoreApp.Model.Repository
 {
     public class PaymentRepository : IPaymentRepository
     {
-        public PaymentRepository() { }
+        private readonly AppDbContext _context;
+        public PaymentRepository(AppDbContext context)
+        {
+            _context = context;
+        }
 
-        private static readonly List<Payment> _payments = new();
+        
 
 
         public async Task<Payment> AddPaymentAsync(Payment payment)
         {
-            payment.Id = _payments.Count + 1;
+            
             payment.PaymentDate = DateTime.UtcNow;
-            _payments.Add(payment);
-
-            return await Task.FromResult(payment);
+            await _context.Payments.AddAsync(payment);
+            await _context.SaveChangesAsync();
+            return payment;
         }
+
 
 
         public async Task<Payment?> GetPaymentByIdAsync(int id)
         {
-            var payment = _payments.FirstOrDefault(p => p.Id == id);
-            if (payment == null)  throw new KeyNotFoundException("Ödeme bulunamadı");
-            return await Task.FromResult(payment);
+            var payment = _context.Payments
+                .Include(p => p.Order)
+                .Include(p => p.User)
+                .AsNoTracking()
+                .FirstOrDefault(p => p.Id == id);
+
+            if (payment == null)  throw new KeyNotFoundException($"'{id}' ID'sine ait ödeme bulunamadı");
+            return payment;
         }
 
 
 
         public async Task<List<Payment>> GetPaymentsByUserIdAsync(int userId)
         {
-            var payments = _payments.Where(p => p.UserId == userId).ToList();
-            return await Task.FromResult(payments);
+            var payments = await _context.Payments
+                .Include(p => p.Order)
+                .Include(p => p.User)
+                .AsNoTracking()
+                .Where(p => p.UserId == userId)
+                .ToListAsync();
+            return payments;
         }
 
 
 
         public async Task<Payment?> GetPaymentByOrderIdAsync(int orderId)
         {
-            var payments = _payments.SingleOrDefault(p => p.OrderId == orderId);
-            return await Task.FromResult(payments);
+            var payment = await _context.Payments
+                .Include(p => p.Order)
+                .Include(p => p.User)
+                .AsNoTracking()
+                .SingleOrDefaultAsync(p => p.OrderId == orderId);
+                
+            return payment;
         }
 
         public async Task<List<Payment>> GetAllPaymentsAsync()
         {
-            var paymentsList = _payments;
-            return await Task.FromResult(paymentsList);
+            var paymentsList = await _context.Payments
+                .Include(p => p.Order)
+                .Include(p => p.User)
+                .AsNoTracking()
+                .ToListAsync();
+
+            return paymentsList;
         }
+
+
+
+
+
+        public async Task UpdatePaymentAsync(Payment payment)
+        {
+            _context.Payments.Update(payment);
+            await _context.SaveChangesAsync();
+        }
+
+
+
+
+
+
+        public async Task<IDbContextTransaction> BeginTransactionAsync()
+        {
+            return await _context.Database.BeginTransactionAsync();
+        }
+
 
 
     }

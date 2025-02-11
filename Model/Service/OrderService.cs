@@ -5,6 +5,7 @@ using BookStoreApp.Model.Entities;
 using BookStoreApp.Model.DTO;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using BookStoreApp.Model.DTO.PaymentDtos;
+using Microsoft.EntityFrameworkCore;
 
 namespace BookStoreApp.Model.Service
 {
@@ -22,61 +23,88 @@ namespace BookStoreApp.Model.Service
         }
 
 
+
+
+
         public async Task<ResponseDto<OrderDto>> AddOrderAsync(int userId, OrderCreateDto orderCreateDto)
         {
             try
             {
-                // 1. Stok Kontrolü
+                //1.tüm kitapları çek
+                var bookIds = orderCreateDto.Items.Select(x => x.BookId).ToList();
+                var books = await _bookRepository.GetBooksByIdsAsync(bookIds);
+
+                //eksik kitap var mı kontrolü
+                var missingBookIds = bookIds.Except(books.Select(x => x.Id)).ToList();
+                if (missingBookIds.Any())
+                    return ResponseDto<OrderDto>.Fail($"Girilen ID'lerde kitap bulunamadı: {string.Join(",", missingBookIds)}");
+
+                //stok kontrolü
                 foreach (var item in orderCreateDto.Items)
                 {
-                    var book =await _bookRepository.GetBookByIdAsync(item.BookId);
-                    if (book == null)
-                        return ResponseDto<OrderDto>.Fail($"Girilen ID'de kitap bulunamadı: {item.BookId}");
-                    if (book.Stock < item.Quantity)
+                    var book = books.FirstOrDefault(x => x.Id == item.BookId);
+                    if (book!.Stock < item.Quantity)
                         return ResponseDto<OrderDto>.Fail($"Stok yetersiz: {book.Title}");
                 }
 
-                // 2. Stok Güncellemesi ve OrderItem Bilgilerinin Hazırlanması
+                // sipariş kalemleri ve stok güncellemesi
                 var orderItems = new List<OrderItem>();
                 decimal totalOrderPrice = 0;
-
-                foreach (var item in orderCreateDto.Items)
+                foreach(var item in orderCreateDto.Items)
                 {
-                    var book = await _bookRepository.GetBookByIdAsync(item.BookId);
-                    book!.Stock -= item.Quantity;
-                    await _bookRepository.UpdateBookAsync(book.Id,book);
+                    var book = books.First(x => x.Id == item.BookId);
+                    book.Stock -= item.Quantity;
+                    
 
                     var orderItem = new OrderItem
                     {
                         BookId = book.Id,
                         Quantity = item.Quantity,
-                        UnitPrice = book.Price, // Kitap fiyatını otomatik ayarla
+                        UnitPrice = book.Price,
+                        TotalPrice = book.Price * item.Quantity
                     };
 
-                    totalOrderPrice += orderItem.TotalPrice; // Toplam sipariş fiyatını güncelle
+                    totalOrderPrice += orderItem.TotalPrice;
                     orderItems.Add(orderItem);
                 }
 
-                // 3. Sipariş Oluşturma
-                var order = new Order
+                //transaction başlat ve sipariş oluştur
+                using (var transaction = await _orderRepository.BeginTransactionAsync())
                 {
-                    UserId = userId,
-                    Items = orderItems,
-                    TotalPrice = totalOrderPrice,
-                    Status = OrderStatus.Pending
-                };
+                    try
+                    {
+                        var order = new Order
+                        {
+                            UserId = userId,
+                            OrderItems = orderItems,
+                            TotalPrice = totalOrderPrice,
+                            Status = OrderStatus.Pending
+                        };
 
-                var createdOrder =await  _orderRepository.AddOrderAsync(order);
-                var result = _mapper.Map<OrderDto>(createdOrder);
+                        var createdOrder = await _orderRepository.AddOrderAsync(order);
+                        await _bookRepository.UpdateBooksAsync(books);
 
-                return ResponseDto<OrderDto>.Succes(result);
+                        await transaction.CommitAsync(); //*Her şey başarılıysa işlemi onayla*
+
+                        var result = _mapper.Map<OrderDto>(createdOrder);
+                        return ResponseDto<OrderDto>.Succes(result);
+                    }
+                    catch (Exception)
+                    {
+                        await transaction.RollbackAsync(); //**Hata olursa her şeyi geri al**
+                        throw;
+                    }
+                }
             }
             catch (Exception ex)
             {
                 return ResponseDto<OrderDto>.Fail(ex.Message);
             }
-
         }
+
+
+
+
 
 
 
@@ -117,7 +145,7 @@ namespace BookStoreApp.Model.Service
         }
 
 
-
+        
 
         public async Task<ResponseDto<List<OrderDto>>> GetOrdersByStatusAsync(OrderStatus status)
         {
@@ -135,57 +163,63 @@ namespace BookStoreApp.Model.Service
         {
             try
             {
-                var order = await _orderRepository.GetOrderByIdAsync(id);
-                if (order == null) return ResponseDto<OrderDto>.Fail("Girilen ID'de sipariş bulunamadı");
-
-                if (newStatus == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled)
+                using (var transaction = await _orderRepository.BeginTransactionAsync())
                 {
-                    foreach (var item in order.Items)
+                    var order = await _orderRepository.GetOrderByIdAsync(id);
+                    if (order == null) return ResponseDto<OrderDto>.Fail("Girilen ID'de sipariş bulunamadı");
+
+                    if (newStatus == OrderStatus.Cancelled && order.Status != OrderStatus.Cancelled)
                     {
-                        var book =await _bookRepository.GetBookByIdAsync(item.Id);
-                        if (book != null)
+                        foreach (var item in order.OrderItems) //sipariş iptal eidlirse stokları geri yükleme
                         {
-                            book.Stock += item.Quantity;
-                            await _bookRepository.UpdateBookAsync(book.Id,book);
-                        }
-                        else
-                        {
-                            return ResponseDto<OrderDto>.Fail("Girilen ID'de kitap bulunamadı, stok işlemleri başarısız!");
+                            var book = await _bookRepository.GetBookByIdAsync(item.BookId);
+                            if (book != null)
+                            {
+                                book.Stock += item.Quantity;
+                                await _bookRepository.UpdateBookAsync(book.Id, book);
+                            }
+                            else
+                            {
+                                return ResponseDto<OrderDto>.Fail("Girilen ID'de kitap bulunamadı, stok işlemleri başarısız!");
+                            }
                         }
                     }
-                }
-                else if (newStatus != OrderStatus.Cancelled && order.Status == OrderStatus.Cancelled)
-                {
-                    foreach (var item in order.Items)
+                    else if (newStatus != OrderStatus.Cancelled && order.Status == OrderStatus.Cancelled)
                     {
-                        var book =await _bookRepository.GetBookByIdAsync(id);
-                        if (book != null && book.Stock >= item.Quantity)
+                        foreach (var item in order.OrderItems) //iptal edilen sipariş tekrar aktif hale getirilirse stoktan düşme
                         {
-                            book.Stock -= item.Quantity;
-                            await _bookRepository.UpdateBookAsync(book.Id,book);
-                        }
-                        else
-                        {
-                            return ResponseDto<OrderDto>.Fail("Girilen ID'de kitap bulunamadı veya " + $"Stok yetersiz: {item.BookId}" + " stok işlemleri başarısız!");
+                            var book = await _bookRepository.GetBookByIdAsync(item.BookId);
+                            if (book != null && book.Stock >= item.Quantity)
+                            {
+                                book.Stock -= item.Quantity;
+                                await _bookRepository.UpdateBookAsync(book.Id, book);
+                            }
+                            else
+                            {
+                                return ResponseDto<OrderDto>.Fail("Girilen ID'de kitap bulunamadı veya "
+                                    + $"Stok yetersiz: {item.BookId}" + " stok işlemleri başarısız!");
 
+                            }
                         }
                     }
-                }
-                order.Status = newStatus;
-                await _orderRepository.UpdateOrderAsync(order);
+                    order.Status = newStatus;
+                    await _orderRepository.UpdateOrderAsync(order);
 
-                var result = _mapper.Map<OrderDto>(order);
-                return ResponseDto<OrderDto>.Succes(result);
+                    await transaction.CommitAsync(); //t.a. onaylama işlemi
+                    var result = _mapper.Map<OrderDto>(order);
+                    return ResponseDto<OrderDto>.Succes(result);
+                }
+
             }
-            catch (Exception ex) 
+            catch (Exception ex)
             {
-                return  ResponseDto<OrderDto>.Fail(ex.Message); 
+                return ResponseDto<OrderDto>.Fail($"Sipariş güncellenirken hata oluştu: {ex.Message}");
             }
-
         }
 
 
 
+        //******
 
         public async Task<ResponseDto<List<OrderDto>>> GetAllOrdersAsync()
         {
@@ -197,7 +231,7 @@ namespace BookStoreApp.Model.Service
                 var result = _mapper.Map<List<OrderDto>>(orders);
                 return ResponseDto<List<OrderDto>>.Succes(result);
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 return ResponseDto<List<OrderDto>>.Fail(ex.Message);
             }
@@ -205,41 +239,35 @@ namespace BookStoreApp.Model.Service
 
 
 
-
+        
 
 
         public async Task<ResponseDto<OrderDto>> UpdateOrderStatusAfterPaymentAsync(int orderId, PaymentStatus paymentStatus)
         {
             try
             {
-                var order = await _orderRepository.GetOrderByIdAsync(orderId);
-                if (order == null)
+                using (var transaction = await _orderRepository.BeginTransactionAsync())
                 {
-                    return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
+                    var order = await _orderRepository.UpdaterOrderStatusAfterPayment(orderId, paymentStatus);
+                   
+
+                    await transaction.CommitAsync();
+                    var result = _mapper.Map<OrderDto>(order);
+                    return ResponseDto<OrderDto>.Succes(result);
                 }
-
-                if (paymentStatus == PaymentStatus.Completed)
-                {
-                    order.Status = OrderStatus.Shipped;
-
-                }
-                else
-                {
-                    order.Status = OrderStatus.Pending;
-                    return ResponseDto<OrderDto>.Fail("Sipariş durumu ödeme tamamlanmadıgı için güncellenemedi.");
-                }
-
-                var updateOrder = await _orderRepository.UpdateOrderAsync(order);
-                var result = _mapper.Map<OrderDto>(updateOrder);
-
-                return ResponseDto<OrderDto>.Succes(result);
             }
-            catch(Exception ex)
+            catch (KeyNotFoundException ex)
             {
                 return ResponseDto<OrderDto>.Fail(ex.Message);
             }
+            catch (Exception ex)
+            {
+                return ResponseDto<OrderDto>.Fail($"Ödeme sonrası sipariş güncellenirken hata oluştu: {ex.Message}");
+            }
 
         }
+
+
 
 
         //##############################################################
@@ -250,103 +278,53 @@ namespace BookStoreApp.Model.Service
         {
             try
             {
-                var order = await _orderRepository.GetOrderByIdAsync(dto.OrderId);
-                if (order == null)
-                    return ResponseDto<OrderDto>.Fail("Sipariş bulunamadı.");
-
-                var book =await _bookRepository.GetBookByIdAsync(dto.BookId);
-                if (book == null || book.Stock < dto.Quantity)
-                    return ResponseDto<OrderDto>.Fail("Stok yetersiz veya kitap bulunamadı.");
-
-                book.Stock -= dto.Quantity;
-                await _bookRepository.UpdateBookAsync(book.Id,book);
-
-                order.AddItem(new OrderItem
-                {
-                    BookId = dto.BookId,
-                    Quantity = dto.Quantity,
-                    UnitPrice = book.Price
-                });
-
-                await _orderRepository.UpdateOrderAsync(order);
-
+                var order = await _orderRepository.AddItemToOrderAsync(dto.OrderId, dto.BookId, dto.Quantity);
                 var result = _mapper.Map<OrderDto>(order);
                 return ResponseDto<OrderDto>.Succes(result);
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
                 return ResponseDto<OrderDto>.Fail(ex.Message);
             }
+            catch (InvalidOperationException ex)
+            {
+                return ResponseDto<OrderDto>.Fail($"Siparişe ürün eklenirken hata oluştu: {ex.Message}");
+            }
         }
 
 
 
 
-        public async Task<ResponseDto<bool>> UpdateOrderItemAsync(int orderId, int bookId, int quantity)
+
+
+
+
+        public async Task<ResponseDto<OrderDto>> UpdateOrderItemAsync(int orderId, int bookId, int quantity)
         {
             try
             {
-                var order = await _orderRepository.GetOrderByIdAsync(orderId);
-
-                if (order == null)
-                    return  ResponseDto<bool>.Fail("Sipariş bulunamadı");
-
-                if (order.Status != OrderStatus.Pending)
-                    return ResponseDto<bool>.Fail("Yalnızca Pending aşamasındak siparişler güncelleme yapabilir");
-
-                var orderItem = order.Items.FirstOrDefault(item => item.BookId == bookId);
-                if (orderItem == null)
-                    return ResponseDto<bool>.Fail("OrderItem bulunamadı");
-
-                if (quantity == 0)
+                using (var transaction = await _orderRepository.BeginTransactionAsync()) // ✅ Transaction Başlat
                 {
-                    // Remove the item
-                    order.Items.Remove(orderItem);
+                    var order = await _orderRepository.UpdateOrderItemAsync(orderId, bookId, quantity);
+                    var result = _mapper.Map<OrderDto>(order);
 
-                    // Update book stock
-                    var book =await  _bookRepository.GetBookByIdAsync(bookId);
-                    if (book != null)
-                        book.Stock += orderItem.Quantity;
+                    await transaction.CommitAsync(); // ✅ Transaction'ı Onayla
+                    return ResponseDto<OrderDto>.Succes(result);
                 }
-                else
-                {
-                    // Update quantity
-                    var difference = orderItem.Quantity - quantity;
-                    orderItem.Quantity = quantity;
-
-                    // Update book stock
-                    var book = await _bookRepository.GetBookByIdAsync(bookId);
-                    if (book != null)
-                        book.Stock += difference;
-                }
-
-                await _orderRepository.UpdateOrderAsync(order);
-                return  ResponseDto<bool>.Succes(true);
             }
-            catch (Exception ex)
+            catch (KeyNotFoundException ex)
             {
-                return  ResponseDto<bool>.Fail(ex.Message);
+                return ResponseDto<OrderDto>.Fail(ex.Message);
+            }
+            catch (InvalidOperationException ex)
+            {
+                return ResponseDto<OrderDto>.Fail($"Sipariş öğesi güncellenirken hata oluştu: {ex.Message}");
             }
         }
 
 
 
-        #region Stock alternative way
-        //public ResponseDto<bool> UpdateStockAfterOrder(int bookId, int quantity)
-        //{
-        //    var book = _bookRepository.GetBookById(bookId);
-        //    if (book == null)
-        //        return ResponseDto<bool>.Fail("Kitap bulunamadı");
 
-        //    if (book.Stock < quantity)
-        //        return ResponseDto<bool>.Fail("Stok yetersiz");
-
-        //    book.Stock -= quantity;
-        //    _bookRepository.UpdateBook(book);
-
-        //    return ResponseDto<bool>.Succes(true);
-        //} 
-        #endregion
 
 
 

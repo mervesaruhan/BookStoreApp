@@ -14,7 +14,7 @@ namespace BookStoreApp.Model.Interface
         Task<ResponseDto<List<OrderDto>>> GetAllOrdersAsync();
         Task<ResponseDto<OrderDto>> UpdateOrderStatusAfterPaymentAsync(int orderId, PaymentStatus paymentStatus);
         Task<ResponseDto<OrderDto>> AddItemToOrderAsync(AddItemToOrderDto dto);
-        Task<ResponseDto<bool>> UpdateOrderItemAsync(int orderId, int bookId, int quantity);
+        Task<ResponseDto<OrderDto>> UpdateOrderItemAsync(int orderId, int bookId, int quantity);
 
     }
 }

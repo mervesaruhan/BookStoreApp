@@ -9,18 +9,18 @@ namespace BookStoreApp.Model.Extensions
         public static void AddDIContainer (this IServiceCollection services)
         {
            services.AddScoped<IUserService, UserService>();
-           services.AddSingleton<IUserRepository, UserRepository>();
+           services.AddScoped<IUserRepository, UserRepository>();
 
-           services.AddSingleton<IBookRepository, BookRepository>();
+           services.AddScoped<IBookRepository, BookRepository>();
            services.AddScoped<IBookService, BookService>();
 
-           services.AddSingleton<IOrderRepository, OrderRepository>();
+           services.AddScoped<IOrderRepository, OrderRepository>();
            services.AddScoped<IOrderService, OrderService>();
 
-           services.AddSingleton<ICategoryRepository, CategoryRepository>();
+           services.AddScoped<ICategoryRepository, CategoryRepository>();
            services.AddScoped<ICategoryService, CategoryService>();
 
-           services.AddSingleton<IPaymentRepository, PaymentRepository>();
+           services.AddScoped<IPaymentRepository, PaymentRepository>();
            services.AddScoped<IPaymentService, PaymentService>();
         }
     }

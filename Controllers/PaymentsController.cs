@@ -2,6 +2,7 @@
 using BookStoreApp.Model.Interface;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace BookStoreApp.Controllers
 {
@@ -19,9 +20,10 @@ namespace BookStoreApp.Controllers
 
 
         [HttpPost]
-        public async Task<IActionResult> AddPaymentAsync(int orderId, PaymentCreateDto paymentCreateDto)
+        public async Task<IActionResult> AddPaymentAsync([FromQuery]int orderId, [FromBody]PaymentCreateDto paymentCreateDto)
         {
-            if (!ModelState.IsValid) return BadRequest("Geçersiz veri gönderildi");
+            if (!ModelState.IsValid) return BadRequest(new { Message = "Geçersiz veri gönderildi", Errors = ModelState.Values
+                .SelectMany(v => v.Errors.Select(e => e.ErrorMessage)) });
 
             var response = await _paymentService.AddPaymentAsync(orderId, paymentCreateDto);
             if (response.Data == null)
@@ -39,9 +41,12 @@ namespace BookStoreApp.Controllers
         }
 
 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")] // yanlıs deger girilmesini engellemek için
         public async Task<IActionResult> GetPaymentByIdAsync(int id)
         {
+            if (id <= 0)
+                return BadRequest(new { Message = "Geçersiz ödeme ID" });
+
             var response = await  _paymentService.GetPaymentByIdAsync(id);
             if (response.Data == null) return NotFound(response);
 

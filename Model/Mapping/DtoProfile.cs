@@ -17,14 +17,19 @@ namespace BookStoreApp.Model.Mapping
             CreateMap<UserRegisterDto, User>().ReverseMap();
 
 
-            CreateMap<Book, BookDto>().ReverseMap();
-            CreateMap<BookCreateDto, BookDto>().ReverseMap();
-            CreateMap<UpdateBookDto, BookDto>().ReverseMap();
-            CreateMap<BookCreateDto, Book>().ReverseMap();
+            //Book Mapping
+            CreateMap<Book, BookDto>()
+                .ForMember(dest => dest.CategoryIds, opt => opt.MapFrom(src => src.BookCategories.Select(bc => bc.CategoryId).ToList())) // Book → DTO dönüşümünde CategoryIds kullan
+                .ReverseMap();
+
+            CreateMap<BookCreateDto, Book>()
+                .ForMember(dest => dest.BookCategories, opt => opt.MapFrom<BookCategoryResolver>()); // DTO → Entity dönüşümünde CategoryIds → BookCategories olarak maplenecek
+
+            CreateMap<UpdateBookDto, Book>().ReverseMap();
 
 
-            CreateMap<OrderCreateDto , OrderDto>().ReverseMap();
-            CreateMap<Order,OrderDto>().ReverseMap();
+            CreateMap<OrderCreateDto, OrderDto>().ReverseMap();
+            CreateMap<Order, OrderDto>().ReverseMap();
             CreateMap<OrderCreateDto, Order>().ReverseMap();
 
 
@@ -33,15 +38,29 @@ namespace BookStoreApp.Model.Mapping
             CreateMap<OrderItemDto, OrderItem>().ReverseMap();
 
             CreateMap<CategoryDto, Category>().ReverseMap();
-            CreateMap<CategoryCreateDto , Category>().ReverseMap();
+            CreateMap<CategoryCreateDto, Category>().ReverseMap();
             CreateMap<CategoryUpdateDto, Category>().ReverseMap();
             CreateMap<CategoryListDto, Category>().ReverseMap();
 
 
             CreateMap<PaymentCreateDto, Payment>().ReverseMap();
             CreateMap<Payment, PaymentDto>().ReverseMap();
-
         }
+
+
+
+
+            ////////////////////////////////////////////
+
+            // CategoryIds → BookCategories Çeviren Custom Resolver
+            public class BookCategoryResolver : IValueResolver<BookCreateDto, Book, ICollection<BookCategory>>
+            {
+            public ICollection<BookCategory> Resolve(BookCreateDto source, Book destination, ICollection<BookCategory> destMember, ResolutionContext context)
+            {
+                return source.CategoryIds.Select(id => new BookCategory { CategoryId = id }).ToList();
+            }
+
+            }
 
 
     }

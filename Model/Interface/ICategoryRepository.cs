@@ -9,5 +9,6 @@ namespace BookStoreApp.Model.Interface
         Task<Category?> GetCategoryByNameAsync(string name);
         Task<List<Category>> GetAllCategoriesAsync();
         Task<bool> DeleteCategoryAsync(int id);
+        Task<List<int>> GetExistingCategoryIdsAsync(List<int> categoryIds);
     }
 }

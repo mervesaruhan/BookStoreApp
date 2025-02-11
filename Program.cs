@@ -3,6 +3,8 @@ using BookStoreApp.Model.Extensions;
 using BookStoreApp.Model.Interface;
 using BookStoreApp.Model.Repository;
 using BookStoreApp.Model.Service;
+using BookStoreApp.Model.Shared;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
 
@@ -32,6 +34,12 @@ builder.Services.AddControllers();
 builder.Services.AddDIContainer();
 
 builder.Services.AddAutoMapper(typeof(Program));
+
+builder.Services.AddDbContext<AppDbContext>(options =>
+{
+    options.UseSqlServer(builder.Configuration.GetConnectionString("SqlServerConnection"));
+}
+);
 
 var app = builder.Build();
 

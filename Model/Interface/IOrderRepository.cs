@@ -1,4 +1,5 @@
 ﻿using BookStoreApp.Model.Entities;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BookStoreApp.Model.Interface
 {
@@ -11,5 +12,10 @@ namespace BookStoreApp.Model.Interface
         Task<Order?> UpdateOrderStatusAsync(int orderId, OrderStatus status);
         Task<List<Order>> GetOrdersByStatusAsync(OrderStatus status);
         Task<Order> UpdateOrderAsync(Order updatedOrder);
+        Task<IDbContextTransaction> BeginTransactionAsync();
+        Task<Order?> UpdaterOrderStatusAfterPayment(int orderId, PaymentStatus paymentStatus);
+        Task<Order?> AddItemToOrderAsync(int orderId, int bookId, int quantity);
+        Task<Order?> RemoveItemFromOrderAsync(int orderId, int bookId);
+        Task<Order?> UpdateOrderItemAsync(int orderId, int bookId, int newQuantity);
     }
 }

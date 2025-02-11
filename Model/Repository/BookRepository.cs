@@ -1,41 +1,32 @@
 ﻿using BookStoreApp.Model.DTO;
 using BookStoreApp.Model.Entities;
 using BookStoreApp.Model.Interface;
+using BookStoreApp.Model.Shared;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
+using System.Linq.Expressions;
 
 namespace BookStoreApp.Model.Repository
 {
     public class BookRepository : IBookRepository
     {
+        private readonly AppDbContext _context;
+        public BookRepository (AppDbContext context)
+        {
+            _context = context;
+        }
 
-        public BookRepository() { }
-
-        private readonly List<Book> _books = new();
+        
 
         public  async Task<Book> AddBookAsync(Book book)
         {
-            // 1. Doğrulama
-            if (string.IsNullOrEmpty(book.Title) || string.IsNullOrEmpty(book.Author))
-            {
-                throw new ValidationException("Kitap adı ve yazar bilgisi boş olamaz");
-            }
-
-            // 2. Benzersizlik Kontrolü (ISBN)
-            if (_books.Any(b => b.ISBN == book.ISBN))
-            {
-                throw new ValidationException("Bu ISBN numarasına sahip bir kitap zaten mevcut.");
-            }
-
-            // 3. Kitaba ID Atama
-            book.Id = _books.Count + 1;
-
-
-            // 4. Kitap Ekleme
-           await Task.Run(() => _books.Add(book));
-
-            // 5. Başarılı Yanıt
+            _context.Books.Add(book);
+            await _context.SaveChangesAsync();
             return book;
         }
+
+
+
 
         public async Task<Book> UpdateBookAsync(int id, Book book)
         {
@@ -50,44 +41,72 @@ namespace BookStoreApp.Model.Repository
             existingBook.Price = book.Price;
             existingBook.Genre = book.Genre;
             existingBook.ISBN = book.ISBN;
-            existingBook.CategoryNames = book.CategoryNames;
             existingBook.Stock = book.Stock;
 
-            return await Task.FromResult(existingBook);
+            //eski kategoriler silinmeli
+            _context.BookCategories.RemoveRange(existingBook.BookCategories);
+
+            //yeni kategoriler eklenmeli
+            existingBook.BookCategories = book.BookCategories;
+
+            _context.SaveChanges();
+
+            return existingBook;
 
         }
 
+
+
+
         public async Task<List<Book>> GetAllBooksAsync()
         {
-            await Task.CompletedTask;
-            return  _books;
+            return await _context.Books
+                .AsNoTracking()
+                .Include(b => b.BookCategories)
+                .ThenInclude(bc => bc.Category)
+                .Include(b => b.OrderItems)
+                .ToListAsync();
         }
 
 
 
         public async Task<Book?> GetBookByIdAsync(int id)
         {
-            var books = _books.FirstOrDefault(x => x.Id == id);
-            return await Task.FromResult(books);
+            return await _context.Books
+                .AsNoTracking()
+                .Include(b => b.BookCategories)
+                .ThenInclude(bc => bc.Category)
+                .Include(b => b.OrderItems)
+                .FirstOrDefaultAsync(b => b.Id == id);
         }
+
 
 
         public async Task<List<Book>> GetBooksByGenreAsync(string genre)
         {
-            var books = _books.Where(g => g.Genre.Equals(genre, StringComparison.OrdinalIgnoreCase)).ToList();
-
-            return await Task.FromResult(books);
+            return await _context.Books
+                .AsNoTracking()
+                .Where(g => g.Genre.ToLower() == genre.ToLower())
+                .Include(b => b.BookCategories)
+                .ThenInclude(bc => bc.Category)
+                .ToListAsync();
         }
+
+
+
 
         public async Task<List<Book>> SearchBooksAsync(string searchText)
         {
-            return await Task.Run(() =>_books
+            return await _context.Books.AsNoTracking()
                 .Where(book =>
-                    book.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                    book.Author.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                    book.Publisher.Contains(searchText, StringComparison.OrdinalIgnoreCase))
-                .ToList());
+                    book.Title.ToLower().Contains(searchText.ToLower()) ||
+                    book.Author.ToLower().Contains(searchText.ToLower()) ||
+                    book.Publisher.ToLower().Contains(searchText.ToLower()))
+                .Include(b => b.BookCategories)
+                .ThenInclude(bc => bc.Category)
+                .ToListAsync();
         }
+
 
 
 
@@ -95,12 +114,40 @@ namespace BookStoreApp.Model.Repository
         {
             var book = await GetBookByIdAsync(id);
             if (book == null) return false;
-            _books.Remove(book);
 
-            await Task.CompletedTask;
+            //kitap siparişlerde yer alıyorsa silinmemeli
+            if (book.OrderItems.Any()) throw new InvalidOperationException("Kitap siparişlerde yer aldığı için silinemez");
+
+            //ilişkili bookCategory tablosundan silinmeli
+            _context.BookCategories.RemoveRange(book.BookCategories);
+
+            _context.Books.Remove(book);
+
+            await _context.SaveChangesAsync();
+
             return true;
         }
 
+
+
+        //veritabanında belirli bir koşula uyan herhangi bir kayıt olup olmadığını kontrol edecek metot, generic metot
+        public async Task<bool> AnyAsync(Expression<Func<Book, bool>> predicate)
+        {
+            return await _context.Books.AnyAsync(predicate);
+        }
+
+        public async Task<List<Book>> GetBooksByIdsAsync(List<int> bookIds)
+        {
+            return await _context.Books
+                .Where(b => bookIds.Contains(b.Id))
+                .ToListAsync();
+        }
+
+        public async Task UpdateBooksAsync(List<Book> books)
+        {
+            _context.Books.UpdateRange(books); // Tüm kitapları tek seferde güncelle
+            await _context.SaveChangesAsync();
+        }
 
     }
 }
